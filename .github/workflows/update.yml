@@ -18,12 +18,14 @@ jobs:
           python-version: '3.10'
 
       - name: Install Dependencies
-        run: pip install requests cryptography
+        run: pip install requests
 
       - name: Run Generator
         env:
           PROTON_USER: ${{ secrets.PROTON_USER }}
           PROTON_PASS: ${{ secrets.PROTON_PASS }}
+          PROTON_COOKIE: ${{ secrets.PROTON_COOKIE }}
+          PROTON_UID: ${{ secrets.PROTON_UID }}
         run: python scripts/generator.py
 
       - name: Commit and Push
@@ -31,4 +33,4 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: sync configs and regenerate wireguard keys [skip ci]" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: sync configs from proton account [skip ci]" && git push)
