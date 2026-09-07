@@ -1,51 +1,51 @@
 const I18N = {
   fa: {
     brandTitle: "پروتون هاب",
-    tagCloud: "ژنراتور پیشرفته کانفیگ",
+    tagCloud: "ژنراتور رسمی سرورها",
     themeLabel: "حالت نمایش",
     langLabel: "زبان سامانه",
-    prefixLabel: "پیشوند نام کانفیگ",
-    protoLabel: "پروتکل خروجی",
-    protoWg: "وایرگارد (WireGuard)",
-    protoUdp: "اوپن‌وی‌پی‌ان (UDP)",
-    protoTcp: "اوپن‌وی‌پی‌ان (TCP)",
+    prefixLabel: "پیشوند فایل کانفیگ",
+    protoLabel: "نوع پروتکل ارتباطی",
+    protoWg: "WireGuard",
+    protoUdp: "OpenVPN (UDP)",
+    protoTcp: "OpenVPN (TCP)",
     mainTitle: "سرورهای رسمی پروتون",
-    mainSub: "فهرست کانفیگ‌های فعال رایگان با محاسبه بار زنده شبکه",
-    statusLoading: "در حال بارگیری داده‌ها...",
-    statusReady: "سرور فعال رایگان",
-    fullServers: "سرور تکمیل ظرفیت (100%)",
-    searchPlaceholder: "جستجوی کشور یا نام سرور...",
+    mainSub: "فهرست کانفیگ‌های فعال با محاسبه بار زنده شبکه",
+    statusLoading: "در حال دریافت داده‌ها...",
+    statusReady: "سرور آماده",
+    fullServers: "سرور پر (100%)",
+    searchPlaceholder: "جستجوی نام کشور یا کد سرور...",
     dlBtn: "دریافت فایل",
     applyBtn: "اعمال",
     errConn: "سروری یافت نشد",
-    toastPrefix: "پیشوند نام کانفیگ‌ها با موفقیت اعمال شد",
+    toastPrefix: "پیشوند نام فایل با موفقیت اعمال شد",
     toastProto: "پروتکل خروجی تغییر یافت",
-    toastReload: "فهرست سرورها به‌روزرسانی شد",
-    footerOwn: 'طراحی و توسعه توسط <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">سپنسار</a>',
-    footerDisclaimer: "این پروژه مستقل بوده و هیچ‌گونه وابستگی تجاری به Proton AG ندارد."
+    toastReload: "درصدهای بار ترافیکی به‌صورت زنده همگام شدند",
+    footerOwn: 'توسعه توسط <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">سپنسار</a>',
+    footerDisclaimer: "این پروژه مستقل بوده و هیچ وابستگی رسمی به Proton AG ندارد."
   },
   en: {
     brandTitle: "Proton Hub",
-    tagCloud: "Advanced Config Generator",
-    themeLabel: "Appearance",
+    tagCloud: "Official Config Generator",
+    themeLabel: "Theme Mode",
     langLabel: "Language",
-    prefixLabel: "Config Prefix",
+    prefixLabel: "Config File Prefix",
     protoLabel: "Export Protocol",
     protoWg: "WireGuard",
     protoUdp: "OpenVPN (UDP)",
     protoTcp: "OpenVPN (TCP)",
     mainTitle: "Proton Official Servers",
-    mainSub: "Active free server inventory with real-time network load",
-    statusLoading: "Loading server inventory...",
-    statusReady: "Active Free Servers",
-    fullServers: "Full Capacity Servers (100%)",
-    searchPlaceholder: "Search country or server name...",
+    mainSub: "Active server inventory with real-time network load",
+    statusLoading: "Loading inventory...",
+    statusReady: "Ready Servers",
+    fullServers: "Full Capacity (100%)",
+    searchPlaceholder: "Search country or server code...",
     dlBtn: "Download",
     applyBtn: "Apply",
     errConn: "No servers found",
-    toastPrefix: "Filename prefix applied",
-    toastProto: "Protocol changed",
-    toastReload: "Servers refreshed",
+    toastPrefix: "File prefix updated successfully",
+    toastProto: "Protocol switched successfully",
+    toastReload: "Real-time loads synchronized",
     footerOwn: 'Crafted with precision by <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">sepansar</a>',
     footerDisclaimer: "This independent project is not affiliated with Proton AG."
   }
@@ -91,7 +91,7 @@ EP6i8CLhEl+dX75aZw9StkqjdpIApYwX6XNDqVuGzfeTXXclk4N4aDPwPFM/Yo/e
 KnvlNlKbljWdMYkfx8r37aOHpchH34cv0Jb5Im+1H07ywnshXNfUhRazOpubJRHn
 bjDuBwWS1/Vwp5AJ+QHsPXhJdl3qHc1szJZVJb3VyAWvG/bWApKfFuZX18tiI4N0
 EA==
------END CERTIFICATE-----`;
+-----END CERTIFICATE-----`[cite: 4];
 
 const OFFICIAL_TLS_CRYPT = `-----BEGIN OpenVPN Static key V1-----
 6acef03f62675b4b1bbd03e53b187727
@@ -110,7 +110,7 @@ a61fc77af39bd81a19218a79762c3386
 344739a0dd48d03025b0450cf1fb5e8c
 aeb893d9a96d1f15519bb3c4dcb40ee3
 16672ea16c012664f8a9f11255518deb
------END OpenVPN Static key V1-----`;
+-----END OpenVPN Static key V1-----`[cite: 4];
 
 let currentLang = "fa";
 let currentProtocol = "wireguard";
@@ -129,7 +129,7 @@ const statusCounter = document.getElementById("status-counter");
 const fullCounterBadge = document.getElementById("full-counter-badge");
 const fullCounterText = document.getElementById("full-counter-text");
 const btnReload = document.getElementById("btn-reload");
-const tableWrapper = document.querySelector(".table-wrapper");
+const serverDeckWrapper = document.querySelector(".server-deck-wrapper");
 const toast = document.getElementById("toast");
 
 const txtBrandTitle = document.getElementById("txt-brand-title");
@@ -146,10 +146,10 @@ const txtMainSubtitle = document.getElementById("txt-main-subtitle");
 const txtFooterOwn = document.getElementById("txt-footer-own");
 const txtFooterDisclaimer = document.getElementById("txt-footer-disclaimer");
 
-function showToast(msg) {
+function triggerToast(msg) {
   toast.textContent = msg;
-  toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), 2500);
+  toast.classList.add("active");
+  setTimeout(() => toast.classList.remove("active"), 2200);
 }
 
 function initTheme() {
@@ -189,7 +189,7 @@ function applyLanguage(lang) {
   txtFooterOwn.innerHTML = t.footerOwn;
   txtFooterDisclaimer.textContent = t.footerDisclaimer;
 
-  renderServerList();
+  renderServers();
 }
 
 btnFa.addEventListener("click", () => applyLanguage("fa"));
@@ -197,49 +197,68 @@ btnEn.addEventListener("click", () => applyLanguage("en"));
 
 btnApplyPrefix.addEventListener("click", () => {
   activePrefix = customPrefix.value.trim() || "Sepansar";
-  renderServerList();
-  showToast(I18N[currentLang].toastPrefix);
+  renderServers();
+  triggerToast(I18N[currentLang].toastPrefix);
 });
 
-document.querySelectorAll(".proto-card").forEach((card) => {
-  card.addEventListener("click", () => {
-    document.querySelectorAll(".proto-card").forEach((c) => c.classList.remove("active"));
-    card.classList.add("active");
-    currentProtocol = card.dataset.proto;
-    renderServerList();
-    showToast(`${I18N[currentLang].toastProto}: ${card.querySelector(".proto-title").textContent}`);
+document.querySelectorAll(".protocol-tile").forEach((tile) => {
+  tile.addEventListener("click", () => {
+    document.querySelectorAll(".protocol-tile").forEach((c) => c.classList.remove("active"));
+    tile.classList.add("active");
+    currentProtocol = tile.dataset.proto;
+    renderServers();
+    triggerToast(I18N[currentLang].toastProto);
   });
 });
 
-btnReload.addEventListener("click", () => {
+async function fetchLiveLoads() {
+  try {
+    const res = await fetch("https://api.protonvpn.ch/vpn/loads");
+    if (res.ok) {
+      const data = await res.json();
+      const loadsList = data.LogicalServerLoads || [];
+      const loadMap = {};
+      loadsList.forEach((itm) => {
+        if (itm.ID && itm.Load !== undefined) {
+          const raw = parseFloat(itm.Load);
+          loadMap[itm.ID] = Math.round(raw <= 1.0 ? raw * 100 : raw);
+        }
+      });
+      serverDataset.forEach((s) => {
+        if (s.ID && loadMap[s.ID] !== undefined) {
+          s.ActualLoad = loadMap[s.ID];
+        }
+      });
+      renderServers();
+    }
+  } catch (err) {}
+}
+
+btnReload.addEventListener("click", async () => {
   btnReload.classList.add("spinning");
-  const s = document.createElement("script");
-  s.src = "servers.js?t=" + Date.now();
-  s.onload = () => {
-    btnReload.classList.remove("spinning");
-    loadServers();
-    showToast(I18N[currentLang].toastReload);
-  };
-  document.body.appendChild(s);
+  await fetchLiveLoads();
+  btnReload.classList.remove("spinning");
+  triggerToast(I18N[currentLang].toastReload);
 });
 
-searchBox.addEventListener("input", renderServerList);
+searchBox.addEventListener("input", renderServers);
 
 function loadServers() {
   if (window.STATIC_SERVERS && Array.isArray(window.STATIC_SERVERS) && window.STATIC_SERVERS.length > 0) {
     serverDataset = window.STATIC_SERVERS;
-    renderServerList();
+    renderServers();
+    fetchLiveLoads();
   } else {
     statusCounter.textContent = I18N[currentLang].errConn;
   }
 }
 
-function getCountryFlag(code) {
+function resolveFlag(code) {
   if (!code || code.length !== 2) return "https://flagcdn.com/w40/un.png";
   return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 }
 
-function renderServerList() {
+function renderServers() {
   const t = I18N[currentLang];
   const query = searchBox.value.trim().toLowerCase();
 
@@ -264,7 +283,7 @@ function renderServerList() {
     fullCounterBadge.style.display = "none";
   }
 
-  tableWrapper.innerHTML = "";
+  serverDeckWrapper.innerHTML = "";
 
   const groups = {};
   filtered.forEach((srv) => {
@@ -278,69 +297,68 @@ function renderServerList() {
     const groupDiv = document.createElement("div");
     
     const isOpen = openGroups[countryCode] !== undefined ? openGroups[countryCode] : false;
-    groupDiv.className = `country-group ${isOpen ? "open" : ""}`;
+    groupDiv.className = `accordion-item ${isOpen ? "expanded" : ""}`;
 
     const countryName = COUNTRY_NAMES[countryCode] || countryCode;
 
-    const header = document.createElement("div");
-    header.className = "country-header";
-    header.innerHTML = `
-      <div class="country-info">
-        <img class="country-flag" src="${getCountryFlag(countryCode)}" alt="${countryCode}">
+    const trigger = document.createElement("div");
+    trigger.className = "accordion-trigger";
+    trigger.innerHTML = `
+      <div class="country-details">
+        <img class="national-flag" src="${resolveFlag(countryCode)}" alt="${countryCode}">
         <span>${countryName}</span>
       </div>
-      <div class="country-header-actions">
-        <span class="country-count">${list.length}</span>
-        <svg class="arrow-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      <div class="accordion-controls">
+        <span class="badge-count">${list.length}</span>
+        <svg class="chevron-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
     `;
 
-    header.addEventListener("click", () => {
-      const nowOpen = groupDiv.classList.toggle("open");
-      openGroups[countryCode] = nowOpen;
+    trigger.addEventListener("click", () => {
+      const state = groupDiv.classList.toggle("expanded");
+      openGroups[countryCode] = state;
     });
 
-    const bodyDiv = document.createElement("div");
-    bodyDiv.className = "country-body";
+    const content = document.createElement("div");
+    content.className = "accordion-content";
 
     list.forEach((srv) => {
       const row = document.createElement("div");
-      row.className = "server-row";
+      row.className = "server-entry";
 
       const ext = currentProtocol === "wireguard" ? ".conf" : ".ovpn";
       const displayName = `${activePrefix}-${srv.Name}${ext}`;
       
-      const load = srv.ActualLoad !== undefined ? srv.ActualLoad : (srv.Load !== undefined ? Math.round(srv.Load) : 84);
+      const load = srv.ActualLoad !== undefined ? srv.ActualLoad : (srv.Load !== undefined ? Math.round(srv.Load) : 80);
       const color = load >= 100 ? "var(--danger)" : load > 85 ? "var(--warning)" : "var(--success)";
-
       const hasIpv6 = Boolean(srv.Features && (srv.Features & 16 || srv.Features & 32));
 
       row.innerHTML = `
-        <span class="server-name">${displayName}</span>
-        <div class="server-meta">
-          <div class="status-indicator" style="color: ${color};">
+        <span class="server-label">${displayName}</span>
+        <div class="server-stats">
+          <div class="load-gauge" style="color: ${color};">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <span>${load}%</span>
           </div>
-          ${hasIpv6 ? '<span class="ipv6-badge">IPv6</span>' : ''}
-          <button class="dl-btn">
+          ${hasIpv6 ? '<span class="tag-ipv6">IPv6</span>' : ''}
+          <button class="btn-download-server">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             <span>${t.dlBtn}</span>
           </button>
         </div>
       `;
 
-      row.querySelector(".dl-btn").addEventListener("click", () => exportConfig(srv));
-      bodyDiv.appendChild(row);
+      row.querySelector(".btn-download-server").addEventListener("click", () => emitConfig(srv));
+      content.appendChild(row);
     });
 
-    groupDiv.appendChild(header);
-    groupDiv.appendChild(bodyDiv);
-    tableWrapper.appendChild(groupDiv);
+    groupDiv.appendChild(trigger);
+    groupDiv.appendChild(content);
+    serverDeckWrapper.appendChild(groupDiv);
   });
 }
 
-function exportConfig(srv) {
+function emitConfig(srv) {
   const finalFilename = `${activePrefix}-${srv.Name}`;
   const ip = srv.Servers && srv.Servers[0] ? srv.Servers[0].EntryIP : srv.Domain;
   const cfg = window.SECRET_CONFIG || { user: "username", pass: "password", wgPrivate: "UKZg5sKBtmgXRYbp8lugpdRnBwYzKfuWqsjeH/aKrU0=" };
@@ -361,8 +379,8 @@ PublicKey = ${pubKey}
 AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = ${ip}:51820
 PersistentKeepalive = 25
-`;
-    executeBlobDownload(`${finalFilename}.conf`, payload);
+`[cite: 5];
+    streamBlobDownload(`${finalFilename}.conf`, payload);
   } else {
     const isTcp = currentProtocol === "openvpn-tcp";
     const proto = isTcp ? "tcp" : "udp";
@@ -409,12 +427,12 @@ ${OFFICIAL_CA}
 <tls-crypt>
 ${OFFICIAL_TLS_CRYPT}
 </tls-crypt>
-`;
-    executeBlobDownload(`${finalFilename}.ovpn`, payload);
+`[cite: 4];
+    streamBlobDownload(`${finalFilename}.ovpn`, payload);
   }
 }
 
-function executeBlobDownload(filename, body) {
+function streamBlobDownload(filename, body) {
   const blob = new Blob([body], { type: "text/plain;charset=utf-8" });
   const anchor = document.createElement("a");
   anchor.href = URL.createObjectURL(blob);
