@@ -15,39 +15,28 @@ HEADERS = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 }
 
-def extract_servers_from_response(data):
-    if isinstance(data, list):
-        return data
-    if isinstance(data, dict):
-        if "LogicalServers" in data:
-            return data["LogicalServers"]
-        if "Servers" in data:
-            return data["Servers"]
-    return []
+def is_free(server):
+    name = str(server.get("Name", "")).upper()
+    tier = server.get("Tier", 0)
+    return "FREE" in name or tier == 0
 
 def fetch_servers():
     endpoints = [
-        ("https://account.proton.me/api/vpn/v2/logicals", HEADERS),
-        ("https://account.protonvpn.com/api/vpn/v2/logicals", HEADERS),
-        ("https://api.protonvpn.ch/vpn/logicals", {"x-pm-appversion": "Other"}),
-        ("https://api.protonmail.ch/vpn/logicals", {"x-pm-appversion": "Other"})
+        "https://account-api.protonvpn.com/api/vpn/v2/logicals?WithIpV6=1",
+        "https://account.proton.me/api/vpn/v2/logicals?WithIpV6=1",
+        "https://account.protonvpn.com/api/vpn/v2/logicals?WithIpV6=1",
+        "https://api.protonvpn.ch/vpn/logicals?WithIpV6=1"
     ]
 
-    for url, headers in endpoints:
+    for url in endpoints:
         try:
-            res = requests.get(url, headers=headers, timeout=15)
+            res = requests.get(url, headers=HEADERS, timeout=15)
             if res.status_code == 200:
-                raw_servers = extract_servers_from_response(res.json())
-                if raw_servers:
-                    active = [s for s in raw_servers if s.get("Status", 1) == 1]
-                    free = [
-                        s for s in active 
-                        if s.get("Tier") == 0 or "FREE" in str(s.get("Name", "")).upper()
-                    ]
-                    if free:
-                        return free
-                    if active:
-                        return active
+                data = res.json()
+                raw_list = data.get("LogicalServers", [])
+                if raw_list:
+                    free_list = [s for s in raw_list if s.get("Status") == 1 and is_free(s)]
+                    return free_list if free_list else [s for s in raw_list if s.get("Status") == 1]
         except Exception:
             continue
     return []
