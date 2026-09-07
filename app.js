@@ -420,7 +420,7 @@ function setupListeners() {
       s.src = "servers.js?t=" + Date.now();
       s.onload = () => {
         btnReload.classList.remove("spinning");
-        if (window.STATIC_SERVERS) {
+        if (window.STATIC_SERVERS && Array.isArray(window.STATIC_SERVERS)) {
           serverDataset = window.STATIC_SERVERS;
           renderServerList();
         }
@@ -437,32 +437,30 @@ function setupListeners() {
   if (searchBox) searchBox.addEventListener("input", renderServerList);
 }
 
-function initApp() {
+function startSync() {
   initTheme();
   setupListeners();
 
-  if (window.STATIC_SERVERS && Array.isArray(window.STATIC_SERVERS) && window.STATIC_SERVERS.length > 0) {
-    serverDataset = window.STATIC_SERVERS;
-    renderServerList();
-  } else {
-    let attempts = 0;
-    const checkInterval = setInterval(() => {
-      attempts++;
-      if (window.STATIC_SERVERS && Array.isArray(window.STATIC_SERVERS) && window.STATIC_SERVERS.length > 0) {
-        clearInterval(checkInterval);
-        serverDataset = window.STATIC_SERVERS;
-        renderServerList();
-      } else if (attempts >= 15) {
-        clearInterval(checkInterval);
-        const statusCounter = document.getElementById("status-counter");
-        if (statusCounter) statusCounter.textContent = I18N[currentLang].errConn;
+  const loadData = () => {
+    if (window.STATIC_SERVERS && Array.isArray(window.STATIC_SERVERS) && window.STATIC_SERVERS.length > 0) {
+      serverDataset = window.STATIC_SERVERS;
+      renderServerList();
+      return true;
+    }
+    return false;
+  };
+
+  if (!loadData()) {
+    const timer = setInterval(() => {
+      if (loadData()) {
+        clearInterval(timer);
       }
-    }, 150);
+    }, 50);
   }
 }
 
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initApp);
+  document.addEventListener("DOMContentLoaded", startSync);
 } else {
-  initApp();
+  startSync();
 }
