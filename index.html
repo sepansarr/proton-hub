@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>پروتون هاب | Proton Hub</title>
   <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="bg-glow-1"></div>
@@ -19,25 +19,27 @@
         </div>
         <div class="brand-text">
           <span class="brand-title" id="txt-brand-title">پروتون هاب</span>
-          <span class="brand-badge" id="tag-cloud">تولیدکننده کانفیگ</span>
+          <span class="brand-badge" id="tag-cloud">ژنراتور حرفه‌ای کانفیگ</span>
         </div>
       </div>
 
       <div class="nav-section">
-        <label id="txt-theme-label">حالت نمایش</label>
-        <button type="button" id="theme-toggle" class="theme-btn">
-          <span class="theme-icon light-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-          </span>
-          <span class="theme-icon dark-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          </span>
-          <span id="theme-status-text">حالت تیره</span>
-        </button>
+        <div class="theme-capsule-wrap">
+          <span id="txt-theme-label" class="section-label">حالت نمایش</span>
+          <div class="ios-switch-container">
+            <input type="checkbox" id="theme-ios-checkbox" class="ios-checkbox">
+            <label for="theme-ios-checkbox" class="ios-capsule">
+              <span class="ios-thumb">
+                <svg class="sun-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2"/></svg>
+                <svg class="moon-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              </span>
+            </label>
+          </div>
+        </div>
       </div>
 
       <div class="nav-section">
-        <label id="txt-lang-label">زبان سامانه</label>
+        <label id="txt-lang-label" class="section-label">زبان سامانه</label>
         <div class="lang-toggle">
           <button type="button" id="btn-fa" class="lang-opt active">فارسی</button>
           <button type="button" id="btn-en" class="lang-opt">English</button>
@@ -45,65 +47,73 @@
       </div>
 
       <div class="nav-section">
-        <label id="lbl-custom-prefix">پیشوند نام فایل کانفیگ</label>
-        <input type="text" id="custom-prefix" value="Sepansar" class="custom-input">
+        <label id="lbl-custom-prefix" class="section-label">پیشوند نام کانفیگ</label>
+        <div class="prefix-input-wrap">
+          <input type="text" id="custom-prefix" value="Sepansar" class="custom-input">
+          <button type="button" id="btn-apply-prefix" class="btn-apply">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span id="txt-apply">اعمال</span>
+          </button>
+        </div>
       </div>
 
       <div class="nav-section">
-        <label id="lbl-protocol">نوع پروتکل ارتباطی</label>
+        <label id="lbl-protocol" class="section-label">پروتکل فعال خروجی</label>
         <div class="protocol-grid">
           <button type="button" class="proto-card active" data-proto="wireguard">
-            <span class="proto-title" id="txt-proto-wg">وایرگارد</span>
+            <div class="proto-header">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              <span class="proto-title" id="txt-proto-wg">وایرگارد (WireGuard)</span>
+            </div>
+            <span class="proto-ext">.conf</span>
           </button>
           <button type="button" class="proto-card" data-proto="openvpn-udp">
-            <span class="proto-title" id="txt-proto-udp">اوپن‌وی‌پی‌ان (UDP)</span>
+            <div class="proto-header">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+              <span class="proto-title" id="txt-proto-udp">اوپن‌وی‌پی‌ان (UDP)</span>
+            </div>
+            <span class="proto-ext">.ovpn</span>
           </button>
           <button type="button" class="proto-card" data-proto="openvpn-tcp">
-            <span class="proto-title" id="txt-proto-tcp">اوپن‌وی‌پی‌ان (TCP)</span>
+            <div class="proto-header">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+              <span class="proto-title" id="txt-proto-tcp">اوپن‌وی‌پی‌ان (TCP)</span>
+            </div>
+            <span class="proto-ext">.ovpn</span>
           </button>
         </div>
       </div>
 
       <footer class="sidebar-footer">
         <p class="copyright-own" id="txt-footer-own">طراحی و توسعه توسط <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">سپنسار</a></p>
-        <p class="disclaimer" id="txt-footer-disclaimer">این پروژه مستقل بوده و هیچ‌گونه وابستگی تجاری به Proton AG ندارد. علامت تجاری Proton VPN متعلق به شرکت Proton AG است.</p>
+        <p class="disclaimer" id="txt-footer-disclaimer">این پروژه مستقل بوده و هیچ‌گونه وابستگی به Proton AG ندارد.</p>
       </footer>
     </aside>
 
     <main class="content-area">
       <header class="content-header">
         <div class="header-titles">
-          <h1 id="txt-main-title">سرورهای رایگان پروتون هاب</h1>
-          <p id="txt-main-subtitle">فهرست سرورهای فعال و بهینه‌سازی‌شده برای بارگیری مستقیم</p>
+          <h1 id="txt-main-title">سرورهای رسمی پروتون</h1>
+          <p id="txt-main-subtitle">فهرست کانفیگ‌های فعال با محاسبه بار زنده شبکه</p>
         </div>
         <div class="stats-pill">
           <span class="live-indicator"></span>
-          <span id="status-counter">در حال دریافت سرورها...</span>
+          <span id="status-counter">در حال بارگذاری داده‌ها...</span>
         </div>
       </header>
 
       <div class="filter-bar">
         <div class="search-wrap">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="text" id="search-box" placeholder="جستجوی نام کشور، شهر یا آی‌پی...">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="search-box" placeholder="جستجوی کشور، شهر یا نام سرور...">
         </div>
       </div>
 
-      <div class="table-wrapper">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th id="th-country">کشور / شهر</th>
-              <th id="th-servername">نام سرور</th>
-              <th id="th-load">میزان مصرف سرور</th>
-              <th id="th-download">بارگیری</th>
-            </tr>
-          </thead>
-          <tbody id="servers-tbody"></tbody>
-        </table>
-      </div>
+      <div class="table-wrapper"></div>
     </main>
   </div>
+
+  <div id="toast" class="toast"></div>
 
   <script src="servers.js"></script>
   <script src="app.js"></script>
