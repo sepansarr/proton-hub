@@ -426,6 +426,9 @@ function setupListeners() {
         }
         showToast(I18N[currentLang].toastReload);
       };
+      s.onerror = () => {
+        btnReload.classList.remove("spinning");
+      };
       document.body.appendChild(s);
     });
   }
@@ -438,19 +441,24 @@ function initApp() {
   initTheme();
   setupListeners();
 
-  let attempts = 0;
-  const checkInterval = setInterval(() => {
-    attempts++;
-    if (window.STATIC_SERVERS && Array.isArray(window.STATIC_SERVERS) && window.STATIC_SERVERS.length > 0) {
-      clearInterval(checkInterval);
-      serverDataset = window.STATIC_SERVERS;
-      renderServerList();
-    } else if (attempts > 30) {
-      clearInterval(checkInterval);
-      const statusCounter = document.getElementById("status-counter");
-      if (statusCounter) statusCounter.textContent = I18N[currentLang].errConn;
-    }
-  }, 100);
+  if (window.STATIC_SERVERS && Array.isArray(window.STATIC_SERVERS) && window.STATIC_SERVERS.length > 0) {
+    serverDataset = window.STATIC_SERVERS;
+    renderServerList();
+  } else {
+    let attempts = 0;
+    const checkInterval = setInterval(() => {
+      attempts++;
+      if (window.STATIC_SERVERS && Array.isArray(window.STATIC_SERVERS) && window.STATIC_SERVERS.length > 0) {
+        clearInterval(checkInterval);
+        serverDataset = window.STATIC_SERVERS;
+        renderServerList();
+      } else if (attempts >= 15) {
+        clearInterval(checkInterval);
+        const statusCounter = document.getElementById("status-counter");
+        if (statusCounter) statusCounter.textContent = I18N[currentLang].errConn;
+      }
+    }, 150);
+  }
 }
 
 if (document.readyState === "loading") {
