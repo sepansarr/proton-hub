@@ -16,7 +16,7 @@ const I18N = {
     statusLoading: "در حال دریافت سرورها...",
     statusReady: "سرور فعال آماده دریافت",
     searchPlaceholder: "جستجوی کشور یا نام سرور...",
-    dlBtn: "Download",
+    dlBtn: "دانلود فایل",
     errConn: "سروری یافت نشد",
     footerOwn: 'طراحی و توسعه توسط <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">سپنسار</a>',
     footerDisclaimer: "این پروژه مستقل بوده و هیچ‌گونه وابستگی تجاری به Proton AG ندارد."
@@ -142,7 +142,7 @@ function loadServers() {
 }
 
 function getCountryFlag(code) {
-  if (!code) return "https://flagcdn.com/w40/un.png";
+  if (!code || code.length !== 2) return "https://flagcdn.com/w40/un.png";
   return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 }
 
@@ -190,7 +190,7 @@ function renderServerList() {
       row.className = "server-row";
 
       const prefix = customPrefix.value.trim() || "ProtonHub";
-      const load = srv.Load !== undefined ? Math.round(srv.Load) : Math.floor(Math.random() * 20 + 75);
+      const load = srv.Load !== undefined ? Math.round(srv.Load) : 75;
       const color = load > 85 ? "var(--danger)" : "var(--success)";
 
       row.innerHTML = `
