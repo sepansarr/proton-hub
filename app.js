@@ -149,13 +149,25 @@ document.querySelectorAll(".proto-card").forEach((card) => {
 searchBox.addEventListener("input", renderServerList);
 
 async function loadServers() {
+  try {
+    const res = await fetch("./data/servers.json?t=" + Date.now());
+    if (res.ok) {
+      const data = await res.json();
+      serverDataset = data.servers || [];
+      window.SECRET_CONFIG = {
+        user: data.user,
+        pass: data.pass,
+        wgPrivate: data.wg_private
+      };
+      renderServerList();
+      return;
+    }
+  } catch (e) {}
+
   const targetUrl = "https://api.protonvpn.ch/vpn/logicals";
   const proxy = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-
   try {
-    const res = await fetch(proxy, {
-      headers: { "x-pm-appversion": "Other" }
-    });
+    const res = await fetch(proxy, { headers: { "x-pm-appversion": "Other" } });
     const data = await res.json();
     serverDataset = data.LogicalServers.filter((s) => s.Status === 1 && s.Tier === 0);
     renderServerList();
@@ -219,12 +231,12 @@ function exportConfig(srv) {
   const prefix = customPrefix.value.trim() || "ProtonHub";
   const finalFilename = `${prefix}-${srv.Name}`;
   const ip = srv.Servers && srv.Servers[0] ? srv.Servers[0].EntryIP : srv.Domain;
+  const cfg = window.SECRET_CONFIG || { user: "", pass: "", wgPrivate: "{{CLIENT_WG_PRIVATE_KEY}}" };
 
   if (currentProtocol === "wireguard") {
     const pubKey = srv.Servers && srv.Servers[0] ? srv.Servers[0].X25519PublicKey || "" : "";
     const payload = `[Interface]
-# Proton Hub Auto Config
-PrivateKey = {{CLIENT_WG_PRIVATE_KEY}}
+PrivateKey = ${cfg.wgPrivate}
 Address = 10.2.0.2/32
 DNS = 10.2.0.1
 
@@ -239,6 +251,10 @@ AllowedIPs = 0.0.0.0/0
     const proto = isTcp ? "tcp" : "udp";
     const port = isTcp ? "443" : "1194";
 
+    const authSection = cfg.user && cfg.pass 
+      ? `<auth-user-pass>\n${cfg.user}\n${cfg.pass}\n</auth-user-pass>`
+      : `auth-user-pass`;
+
     const payload = `client
 dev tun
 proto ${proto}
@@ -250,7 +266,7 @@ persist-tun
 cipher AES-256-GCM
 auth SHA512
 verb 3
-auth-user-pass
+${authSection}
 <ca>
 -----BEGIN CERTIFICATE-----
 MIIB/DCCAYWgAwIBAgIUQ1aG3K7...
