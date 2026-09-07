@@ -21,7 +21,7 @@ const I18N = {
     thLoad: "میزان مصرف سرور",
     thAction: "بارگیری",
     dlBtn: "دریافت فایل",
-    errConn: "خطا در برقراری ارتباط با سرورها",
+    errConn: "سروری یافت نشد",
     footerOwn: 'طراحی و توسعه توسط <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">سپنسار</a>',
     footerDisclaimer: "این پروژه مستقل بوده و هیچ‌گونه وابستگی تجاری به Proton AG ندارد. علامت تجاری Proton VPN متعلق به شرکت Proton AG است."
   },
@@ -47,7 +47,7 @@ const I18N = {
     thLoad: "Server Load",
     thAction: "Action",
     dlBtn: "Download",
-    errConn: "Failed to connect to servers",
+    errConn: "No servers found",
     footerOwn: 'Crafted with precision by <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">sepansar</a>',
     footerDisclaimer: "This is an independent project and not affiliated with or endorsed by Proton AG. Proton VPN is a registered trademark of Proton AG."
   }
@@ -56,7 +56,6 @@ const I18N = {
 let currentLang = "fa";
 let currentProtocol = "wireguard";
 let serverDataset = [];
-window.SECRET_CONFIG = { user: "", pass: "", wgPrivate: "cGFzc3dvcmRfZXhhbXBsZV9wcml2YXRlX2tleV8xMjM0NTY=" };
 
 const btnFa = document.getElementById("btn-fa");
 const btnEn = document.getElementById("btn-en");
@@ -149,46 +148,13 @@ document.querySelectorAll(".proto-card").forEach((card) => {
 
 searchBox.addEventListener("input", renderServerList);
 
-async function loadServers() {
-  try {
-    const localRes = await fetch("data/servers.json?t=" + new Date().getTime());
-    if (localRes.ok) {
-      const data = await localRes.json();
-      if (data.servers && data.servers.length > 0) {
-        serverDataset = data.servers;
-        window.SECRET_CONFIG = {
-          user: data.user || "",
-          pass: data.pass || "",
-          wgPrivate: data.wg_private || "cGFzc3dvcmRfZXhhbXBsZV9wcml2YXRlX2tleV8xMjM0NTY="
-        };
-        renderServerList();
-        return;
-      }
-    }
-  } catch (e) {}
-
-  const target = "https://api.protonvpn.ch/vpn/logicals";
-  const proxyEndpoints = [
-    `https://corsproxy.io/?${encodeURIComponent(target)}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`
-  ];
-
-  for (const pUrl of proxyEndpoints) {
-    try {
-      const res = await fetch(pUrl, { headers: { "x-pm-appversion": "Other" } });
-      if (res.ok) {
-        const raw = await res.json();
-        const list = raw.LogicalServers || raw;
-        if (Array.isArray(list)) {
-          serverDataset = list.filter((s) => s.Status === 1 && s.Tier === 0);
-          renderServerList();
-          return;
-        }
-      }
-    } catch (err) {}
+function loadServers() {
+  if (window.STATIC_SERVERS && Array.isArray(window.STATIC_SERVERS) && window.STATIC_SERVERS.length > 0) {
+    serverDataset = window.STATIC_SERVERS;
+    renderServerList();
+  } else {
+    statusCounter.textContent = I18N[currentLang].errConn;
   }
-
-  statusCounter.textContent = I18N[currentLang].errConn;
 }
 
 function renderServerList() {
@@ -246,7 +212,7 @@ function exportConfig(srv) {
   const prefix = customPrefix.value.trim() || "ProtonHub";
   const finalFilename = `${prefix}-${srv.Name || "VPN"}`;
   const ip = srv.Servers && srv.Servers[0] ? srv.Servers[0].EntryIP : srv.Domain;
-  const cfg = window.SECRET_CONFIG;
+  const cfg = window.SECRET_CONFIG || { user: "", pass: "", wgPrivate: "cGFzc3dvcmRfZXhhbXBsZV9wcml2YXRlX2tleV8xMjM0NTY=" };
 
   if (currentProtocol === "wireguard") {
     const pubKey = srv.Servers && srv.Servers[0] ? srv.Servers[0].X25519PublicKey || "" : "";
