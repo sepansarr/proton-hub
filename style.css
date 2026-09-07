@@ -198,6 +198,9 @@ body {
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .lang-opt.active {
@@ -329,6 +332,12 @@ body {
   margin-top: 4px;
 }
 
+.stats-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .stats-pill {
   display: flex;
   align-items: center;
@@ -339,6 +348,47 @@ body {
   border-radius: 30px;
   font-size: 0.82rem;
   font-weight: 600;
+}
+
+.full-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 30px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.reload-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reload-btn:hover {
+  border-color: var(--accent-purple);
+  color: var(--accent-purple);
+}
+
+.reload-btn.spinning svg {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .live-indicator {
@@ -389,9 +439,15 @@ html[dir="rtl"] .search-wrap svg {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px;
+  padding: 16px 20px;
   background: var(--bg-card);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+  user-select: none;
+}
+
+.country-group.open .country-header {
+  border-bottom-color: var(--border-color);
 }
 
 .country-info {
@@ -399,7 +455,7 @@ html[dir="rtl"] .search-wrap svg {
   align-items: center;
   gap: 12px;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 
 .country-flag {
@@ -409,12 +465,35 @@ html[dir="rtl"] .search-wrap svg {
   object-fit: cover;
 }
 
+.country-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .country-count {
   font-size: 0.78rem;
   color: var(--text-muted);
   background: var(--bg-card-sub);
   padding: 2px 10px;
   border-radius: 12px;
+}
+
+.arrow-icon {
+  transition: transform 0.3s ease;
+  color: var(--text-muted);
+}
+
+.country-group.open .arrow-icon {
+  transform: rotate(180deg);
+}
+
+.country-body {
+  display: none;
+}
+
+.country-group.open .country-body {
+  display: block;
 }
 
 .server-row {
