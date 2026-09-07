@@ -15,34 +15,50 @@ HEADERS = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 }
 
+def is_free_server(s):
+    name = s.get("Name", "").upper()
+    tier = s.get("Tier", 0)
+    if "FREE" in name or tier == 0:
+        return True
+    return False
+
 def fetch_servers():
     url = "https://account.protonvpn.com/api/vpn/v2/logicals"
-    res = requests.get(url, headers=HEADERS)
-    if res.status_code == 200:
-        data = res.json()
-        servers = data.get("LogicalServers", [])
-        return [s for s in servers if s.get("Status") == 1 and s.get("Tier") == 0]
-    
+    try:
+        res = requests.get(url, headers=HEADERS, timeout=20)
+        if res.status_code == 200:
+            servers = res.json().get("LogicalServers", [])
+            active = [s for s in servers if s.get("Status") == 1]
+            free = [s for s in active if is_free_server(s)]
+            return free if free else active
+    except Exception:
+        pass
+
     fallback_url = "https://api.protonvpn.ch/vpn/logicals"
-    res_fb = requests.get(fallback_url, headers={"x-pm-appversion": "Other"})
-    if res_fb.status_code == 200:
-        data_fb = res_fb.json()
-        servers_fb = data_fb.get("LogicalServers", [])
-        return [s for s in servers_fb if s.get("Status") == 1 and s.get("Tier") == 0]
+    try:
+        res_fb = requests.get(fallback_url, headers={"x-pm-appversion": "Other"}, timeout=20)
+        if res_fb.status_code == 200:
+            servers_fb = res_fb.json().get("LogicalServers", [])
+            active_fb = [s for s in servers_fb if s.get("Status") == 1]
+            free_fb = [s for s in active_fb if is_free_server(s)]
+            return free_fb if free_fb else active_fb
+    except Exception:
+        pass
+
     return []
 
 def main():
     servers = fetch_servers()
-    payload = {
-        "user": PROTON_USER,
-        "pass": PROTON_PASS,
-        "servers": servers,
-        "count": len(servers)
-    }
-
-    os.makedirs("data", exist_ok=True)
-    with open("data/servers.json", "w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False, indent=2)
+    
+    js_content = f"""window.STATIC_SERVERS = {json.dumps(servers, ensure_ascii=False)};
+window.SECRET_CONFIG = {{
+  user: "{PROTON_USER}",
+  pass: "{PROTON_PASS}",
+  wgPrivate: "cGFzc3dvcmRfZXhhbXBsZV9wcml2YXRlX2tleV8xMjM0NTY="
+}};
+"""
+    with open("servers.js", "w", encoding="utf-8") as f:
+        f.write(js_content)
 
 if __name__ == "__main__":
     main()
