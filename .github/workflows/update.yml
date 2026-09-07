@@ -1,7 +1,8 @@
-name: Monthly Config Sync
+name: Scheduled Config Sync
 
 on:
   schedule:
+    - cron: '0 */6 * * *'
     - cron: '0 0 1 * *'
   workflow_dispatch:
 
@@ -33,4 +34,4 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: sync configs from proton account [skip ci]" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: sync live configs and vpn credentials [skip ci]" && git push)
