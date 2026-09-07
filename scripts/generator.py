@@ -15,28 +15,52 @@ HEADERS = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 }
 
-def fetch_all_servers():
+def is_truly_free(s):
+    name = str(s.get("Name", "")).upper()
+    tier = s.get("Tier", 0)
+    if "FREE" in name:
+        return True
+    if tier == 0:
+        return True
+    return False
+
+def extract_real_load(s):
+    if "Load" in s and s["Load"] is not None:
+        return int(round(float(s["Load"])))
+    if "Score" in s and s["Score"] is not None:
+        return int(round(float(s["Score"])))
+    if s.get("Servers") and isinstance(s["Servers"], list) and len(s["Servers"]) > 0:
+        sub = s["Servers"][0]
+        if "Load" in sub and sub["Load"] is not None:
+            return int(round(float(sub["Load"])))
+    return 75
+
+def fetch_free_servers():
     endpoints = [
-        "https://account-api.protonvpn.com/api/vpn/v2/logicals",
-        "https://account.proton.me/api/vpn/v2/logicals",
-        "https://account.protonvpn.com/api/vpn/v2/logicals",
-        "https://api.protonvpn.ch/vpn/logicals"
+        "https://account-api.protonvpn.com/api/vpn/v2/logicals?WithIpV6=1",
+        "https://account.proton.me/api/vpn/v2/logicals?WithIpV6=1",
+        "https://account.protonvpn.com/api/vpn/v2/logicals?WithIpV6=1",
+        "https://api.protonvpn.ch/vpn/logicals?WithIpV6=1"
     ]
 
     for url in endpoints:
         try:
-            res = requests.get(url, headers=HEADERS, timeout=25)
+            res = requests.get(url, headers=HEADERS, timeout=20)
             if res.status_code == 200:
                 raw = res.json()
                 items = raw.get("LogicalServers", []) if isinstance(raw, dict) else raw
                 if items and isinstance(items, list):
-                    return [s for s in items if s.get("Status", 1) == 1]
+                    filtered = [s for s in items if s.get("Status", 1) == 1 and is_truly_free(s)]
+                    for s in filtered:
+                        s["ActualLoad"] = extract_real_load(s)
+                    if filtered:
+                        return filtered
         except Exception:
             continue
     return []
 
 def main():
-    servers = fetch_all_servers()
+    servers = fetch_free_servers()
     
     js_content = f"""window.STATIC_SERVERS = {json.dumps(servers, ensure_ascii=False)};
 window.SECRET_CONFIG = {{
