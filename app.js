@@ -18,9 +18,9 @@ const I18N = {
     dlBtn: "دریافت فایل",
     applyBtn: "اعمال",
     errConn: "سروری یافت نشد",
-    toastPrefix: "پیشوند نام فایل با موفقیت اعمال شد",
+    toastPrefix: "پیشوند نام فایل اعمال شد",
     toastProto: "پروتکل خروجی تغییر یافت",
-    toastReload: "درصدهای بار ترافیکی به‌صورت زنده همگام شدند",
+    toastReload: "درصدهای بار ترافیکی به‌روزرسانی شدند",
     footerOwn: 'توسعه توسط <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">سپنسار</a>',
     footerDisclaimer: "این پروژه مستقل بوده و هیچ وابستگی رسمی به Proton AG ندارد."
   },
@@ -43,9 +43,9 @@ const I18N = {
     dlBtn: "Download",
     applyBtn: "Apply",
     errConn: "No servers found",
-    toastPrefix: "File prefix updated successfully",
-    toastProto: "Protocol switched successfully",
-    toastReload: "Real-time loads synchronized",
+    toastPrefix: "File prefix updated",
+    toastProto: "Protocol switched",
+    toastReload: "Server loads refreshed",
     footerOwn: 'Crafted with precision by <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">sepansar</a>',
     footerDisclaimer: "This independent project is not affiliated with Proton AG."
   }
@@ -129,24 +129,14 @@ const statusCounter = document.getElementById("status-counter");
 const fullCounterBadge = document.getElementById("full-counter-badge");
 const fullCounterText = document.getElementById("full-counter-text");
 const btnReload = document.getElementById("btn-reload");
-const serverDeckWrapper = document.querySelector(".server-deck-wrapper");
 const toast = document.getElementById("toast");
 
-const txtBrandTitle = document.getElementById("txt-brand-title");
-const tagCloud = document.getElementById("tag-cloud");
-const txtThemeLabel = document.getElementById("txt-theme-label");
-const txtLangLabel = document.getElementById("txt-lang-label");
-const lblCustomPrefix = document.getElementById("lbl-custom-prefix");
-const lblProtocol = document.getElementById("lbl-protocol");
-const txtProtoWg = document.getElementById("txt-proto-wg");
-const txtProtoUdp = document.getElementById("txt-proto-udp");
-const txtProtoTcp = document.getElementById("txt-proto-tcp");
-const txtMainTitle = document.getElementById("txt-main-title");
-const txtMainSubtitle = document.getElementById("txt-main-subtitle");
-const txtFooterOwn = document.getElementById("txt-footer-own");
-const txtFooterDisclaimer = document.getElementById("txt-footer-disclaimer");
+function getContainer() {
+  return document.querySelector(".server-deck-wrapper") || document.querySelector(".table-wrapper") || document.body;
+}
 
 function triggerToast(msg) {
+  if (!toast) return;
   toast.textContent = msg;
   toast.classList.add("active");
   setTimeout(() => toast.classList.remove("active"), 2200);
@@ -155,55 +145,69 @@ function triggerToast(msg) {
 function initTheme() {
   const saved = localStorage.getItem("sepansar_theme") || "dark";
   document.documentElement.setAttribute("data-theme", saved);
-  themeCheckbox.checked = (saved === "light");
+  if (themeCheckbox) themeCheckbox.checked = (saved === "light");
 }
 
-themeCheckbox.addEventListener("change", () => {
-  const targetTheme = themeCheckbox.checked ? "light" : "dark";
-  document.documentElement.setAttribute("data-theme", targetTheme);
-  localStorage.setItem("sepansar_theme", targetTheme);
-});
+if (themeCheckbox) {
+  themeCheckbox.addEventListener("change", () => {
+    const targetTheme = themeCheckbox.checked ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", targetTheme);
+    localStorage.setItem("sepansar_theme", targetTheme);
+  });
+}
 
 function applyLanguage(lang) {
   currentLang = lang;
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
 
-  btnFa.classList.toggle("active", lang === "fa");
-  btnEn.classList.toggle("active", lang === "en");
+  if (btnFa) btnFa.classList.toggle("active", lang === "fa");
+  if (btnEn) btnEn.classList.toggle("active", lang === "en");
 
   const t = I18N[lang];
-  txtBrandTitle.textContent = t.brandTitle;
-  tagCloud.textContent = t.tagCloud;
-  txtThemeLabel.textContent = t.themeLabel;
-  txtLangLabel.textContent = t.langLabel;
-  lblCustomPrefix.textContent = t.prefixLabel;
-  lblProtocol.textContent = t.protoLabel;
-  txtProtoWg.textContent = t.protoWg;
-  txtProtoUdp.textContent = t.protoUdp;
-  txtProtoTcp.textContent = t.protoTcp;
-  txtMainTitle.textContent = t.mainTitle;
-  txtMainSubtitle.textContent = t.mainSub;
-  searchBox.placeholder = t.searchPlaceholder;
-  txtApply.textContent = t.applyBtn;
-  txtFooterOwn.innerHTML = t.footerOwn;
-  txtFooterDisclaimer.textContent = t.footerDisclaimer;
+  const elMap = {
+    "txt-brand-title": t.brandTitle,
+    "tag-cloud": t.tagCloud,
+    "txt-theme-label": t.themeLabel,
+    "txt-lang-label": t.langLabel,
+    "lbl-custom-prefix": t.prefixLabel,
+    "lbl-protocol": t.protoLabel,
+    "txt-proto-wg": t.protoWg,
+    "txt-proto-udp": t.protoUdp,
+    "txt-proto-tcp": t.protoTcp,
+    "txt-main-title": t.mainTitle,
+    "txt-main-subtitle": t.mainSub,
+    "txt-apply": t.applyBtn,
+    "txt-footer-disclaimer": t.footerDisclaimer
+  };
+
+  for (const [id, val] of Object.entries(elMap)) {
+    const node = document.getElementById(id);
+    if (node) node.textContent = val;
+  }
+
+  const footOwn = document.getElementById("txt-footer-own");
+  if (footOwn) footOwn.innerHTML = t.footerOwn;
+
+  if (searchBox) searchBox.placeholder = t.searchPlaceholder;
 
   renderServers();
 }
 
-btnFa.addEventListener("click", () => applyLanguage("fa"));
-btnEn.addEventListener("click", () => applyLanguage("en"));
+if (btnFa) btnFa.addEventListener("click", () => applyLanguage("fa"));
+if (btnEn) btnEn.addEventListener("click", () => applyLanguage("en"));
 
-btnApplyPrefix.addEventListener("click", () => {
-  activePrefix = customPrefix.value.trim() || "Sepansar";
-  renderServers();
-  triggerToast(I18N[currentLang].toastPrefix);
-});
+if (btnApplyPrefix) {
+  btnApplyPrefix.addEventListener("click", () => {
+    if (customPrefix) activePrefix = customPrefix.value.trim() || "Sepansar";
+    renderServers();
+    triggerToast(I18N[currentLang].toastPrefix);
+  });
+}
 
-document.querySelectorAll(".protocol-tile").forEach((tile) => {
+document.querySelectorAll(".protocol-tile, .proto-card").forEach((tile) => {
   tile.addEventListener("click", () => {
-    document.querySelectorAll(".protocol-tile").forEach((c) => c.classList.remove("active"));
+    document.querySelectorAll(".protocol-tile, .proto-card").forEach((c) => c.classList.remove("active"));
     tile.classList.add("active");
     currentProtocol = tile.dataset.proto;
     renderServers();
@@ -213,35 +217,48 @@ document.querySelectorAll(".protocol-tile").forEach((tile) => {
 
 async function fetchLiveLoads() {
   try {
-    const res = await fetch("https://api.protonvpn.ch/vpn/loads");
-    if (res.ok) {
-      const data = await res.json();
-      const loadsList = data.LogicalServerLoads || [];
-      const loadMap = {};
-      loadsList.forEach((itm) => {
-        if (itm.ID && itm.Load !== undefined) {
-          const raw = parseFloat(itm.Load);
-          loadMap[itm.ID] = Math.round(raw <= 1.0 ? raw * 100 : raw);
+    const proxies = [
+      "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://api.protonvpn.ch/vpn/loads"),
+      "https://corsproxy.io/?" + encodeURIComponent("https://api.protonvpn.ch/vpn/loads")
+    ];
+    for (const pUrl of proxies) {
+      try {
+        const res = await fetch(pUrl, { cache: "no-cache" });
+        if (res.ok) {
+          const data = await res.json();
+          const loadsList = data.LogicalServerLoads || [];
+          const loadMap = {};
+          loadsList.forEach((itm) => {
+            if (itm.ID && itm.Load !== undefined) {
+              const raw = parseFloat(itm.Load);
+              loadMap[itm.ID] = Math.round(raw <= 1.0 ? raw * 100 : raw);
+            }
+          });
+          if (Object.keys(loadMap).length > 0) {
+            serverDataset.forEach((s) => {
+              if (s.ID && loadMap[s.ID] !== undefined) {
+                s.ActualLoad = loadMap[s.ID];
+              }
+            });
+            renderServers();
+            break;
+          }
         }
-      });
-      serverDataset.forEach((s) => {
-        if (s.ID && loadMap[s.ID] !== undefined) {
-          s.ActualLoad = loadMap[s.ID];
-        }
-      });
-      renderServers();
+      } catch (e) {}
     }
   } catch (err) {}
 }
 
-btnReload.addEventListener("click", async () => {
-  btnReload.classList.add("spinning");
-  await fetchLiveLoads();
-  btnReload.classList.remove("spinning");
-  triggerToast(I18N[currentLang].toastReload);
-});
+if (btnReload) {
+  btnReload.addEventListener("click", async () => {
+    btnReload.classList.add("spinning");
+    await fetchLiveLoads();
+    btnReload.classList.remove("spinning");
+    triggerToast(I18N[currentLang].toastReload);
+  });
+}
 
-searchBox.addEventListener("input", renderServers);
+if (searchBox) searchBox.addEventListener("input", renderServers);
 
 function loadServers() {
   if (window.STATIC_SERVERS && Array.isArray(window.STATIC_SERVERS) && window.STATIC_SERVERS.length > 0) {
@@ -249,7 +266,7 @@ function loadServers() {
     renderServers();
     fetchLiveLoads();
   } else {
-    statusCounter.textContent = I18N[currentLang].errConn;
+    if (statusCounter) statusCounter.textContent = I18N[currentLang].errConn;
   }
 }
 
@@ -260,7 +277,7 @@ function resolveFlag(code) {
 
 function renderServers() {
   const t = I18N[currentLang];
-  const query = searchBox.value.trim().toLowerCase();
+  const query = searchBox ? searchBox.value.trim().toLowerCase() : "";
 
   const filtered = serverDataset.filter((s) => {
     const name = (s.Name || "").toLowerCase();
@@ -274,16 +291,20 @@ function renderServers() {
     return l >= 100;
   }).length;
 
-  statusCounter.textContent = `${filtered.length} ${t.statusReady}`;
+  if (statusCounter) statusCounter.textContent = `${filtered.length} ${t.statusReady}`;
   
-  if (fullCount > 0) {
-    fullCounterBadge.style.display = "flex";
-    fullCounterText.textContent = `${fullCount} ${t.fullServers}`;
-  } else {
-    fullCounterBadge.style.display = "none";
+  if (fullCounterBadge && fullCounterText) {
+    if (fullCount > 0) {
+      fullCounterBadge.style.display = "flex";
+      fullCounterText.textContent = `${fullCount} ${t.fullServers}`;
+    } else {
+      fullCounterBadge.style.display = "none";
+    }
   }
 
-  serverDeckWrapper.innerHTML = "";
+  const container = getContainer();
+  if (!container) return;
+  container.innerHTML = "";
 
   const groups = {};
   filtered.forEach((srv) => {
@@ -297,34 +318,35 @@ function renderServers() {
     const groupDiv = document.createElement("div");
     
     const isOpen = openGroups[countryCode] !== undefined ? openGroups[countryCode] : false;
-    groupDiv.className = `accordion-item ${isOpen ? "expanded" : ""}`;
+    groupDiv.className = `accordion-item country-group ${isOpen ? "expanded open" : ""}`;
 
     const countryName = COUNTRY_NAMES[countryCode] || countryCode;
 
     const trigger = document.createElement("div");
-    trigger.className = "accordion-trigger";
+    trigger.className = "accordion-trigger country-header";
     trigger.innerHTML = `
-      <div class="country-details">
-        <img class="national-flag" src="${resolveFlag(countryCode)}" alt="${countryCode}">
+      <div class="country-details country-info">
+        <img class="national-flag country-flag" src="${resolveFlag(countryCode)}" alt="${countryCode}">
         <span>${countryName}</span>
       </div>
-      <div class="accordion-controls">
-        <span class="badge-count">${list.length}</span>
-        <svg class="chevron-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      <div class="accordion-controls country-header-actions">
+        <span class="badge-count country-count">${list.length}</span>
+        <svg class="chevron-icon arrow-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
     `;
 
     trigger.addEventListener("click", () => {
       const state = groupDiv.classList.toggle("expanded");
+      groupDiv.classList.toggle("open", state);
       openGroups[countryCode] = state;
     });
 
     const content = document.createElement("div");
-    content.className = "accordion-content";
+    content.className = "accordion-content country-body";
 
     list.forEach((srv) => {
       const row = document.createElement("div");
-      row.className = "server-entry";
+      row.className = "server-entry server-row";
 
       const ext = currentProtocol === "wireguard" ? ".conf" : ".ovpn";
       const displayName = `${activePrefix}-${srv.Name}${ext}`;
@@ -334,27 +356,27 @@ function renderServers() {
       const hasIpv6 = Boolean(srv.Features && (srv.Features & 16 || srv.Features & 32));
 
       row.innerHTML = `
-        <span class="server-label">${displayName}</span>
-        <div class="server-stats">
-          <div class="load-gauge" style="color: ${color};">
+        <span class="server-label server-name">${displayName}</span>
+        <div class="server-stats server-meta">
+          <div class="load-gauge status-indicator" style="color: ${color};">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <span>${load}%</span>
           </div>
-          ${hasIpv6 ? '<span class="tag-ipv6">IPv6</span>' : ''}
-          <button class="btn-download-server">
+          ${hasIpv6 ? '<span class="tag-ipv6 ipv6-badge">IPv6</span>' : ''}
+          <button class="btn-download-server dl-btn">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             <span>${t.dlBtn}</span>
           </button>
         </div>
       `;
 
-      row.querySelector(".btn-download-server").addEventListener("click", () => emitConfig(srv));
+      row.querySelector(".btn-download-server, .dl-btn").addEventListener("click", () => emitConfig(srv));
       content.appendChild(row);
     });
 
     groupDiv.appendChild(trigger);
     groupDiv.appendChild(content);
-    serverDeckWrapper.appendChild(groupDiv);
+    container.appendChild(groupDiv);
   });
 }
 
