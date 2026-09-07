@@ -118,35 +118,12 @@ let activePrefix = "Sepansar";
 let serverDataset = [];
 let openGroups = {};
 
-const themeCheckbox = document.getElementById("theme-ios-checkbox");
-const btnFa = document.getElementById("btn-fa");
-const btnEn = document.getElementById("btn-en");
-const customPrefix = document.getElementById("custom-prefix");
-const btnApplyPrefix = document.getElementById("btn-apply-prefix");
-const txtApply = document.getElementById("txt-apply");
-const searchBox = document.getElementById("search-box");
-const statusCounter = document.getElementById("status-counter");
-const fullCounterBadge = document.getElementById("full-counter-badge");
-const fullCounterText = document.getElementById("full-counter-text");
-const btnReload = document.getElementById("btn-reload");
-const tableWrapper = document.querySelector(".table-wrapper");
-const toast = document.getElementById("toast");
-
-const txtBrandTitle = document.getElementById("txt-brand-title");
-const tagCloud = document.getElementById("tag-cloud");
-const txtThemeLabel = document.getElementById("txt-theme-label");
-const txtLangLabel = document.getElementById("txt-lang-label");
-const lblCustomPrefix = document.getElementById("lbl-custom-prefix");
-const lblProtocol = document.getElementById("lbl-protocol");
-const txtProtoWg = document.getElementById("txt-proto-wg");
-const txtProtoUdp = document.getElementById("txt-proto-udp");
-const txtProtoTcp = document.getElementById("txt-proto-tcp");
-const txtMainTitle = document.getElementById("txt-main-title");
-const txtMainSubtitle = document.getElementById("txt-main-subtitle");
-const txtFooterOwn = document.getElementById("txt-footer-own");
-const txtFooterDisclaimer = document.getElementById("txt-footer-disclaimer");
+function getContainer() {
+  return document.querySelector(".table-wrapper");
+}
 
 function showToast(msg) {
+  const toast = document.getElementById("toast");
   if (!toast) return;
   toast.textContent = msg;
   toast.classList.add("show");
@@ -156,15 +133,8 @@ function showToast(msg) {
 function initTheme() {
   const saved = localStorage.getItem("sepansar_theme") || "dark";
   document.documentElement.setAttribute("data-theme", saved);
+  const themeCheckbox = document.getElementById("theme-ios-checkbox");
   if (themeCheckbox) themeCheckbox.checked = (saved === "light");
-}
-
-if (themeCheckbox) {
-  themeCheckbox.addEventListener("change", () => {
-    const targetTheme = themeCheckbox.checked ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", targetTheme);
-    localStorage.setItem("sepansar_theme", targetTheme);
-  });
 }
 
 function applyLanguage(lang) {
@@ -172,94 +142,40 @@ function applyLanguage(lang) {
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
 
+  const btnFa = document.getElementById("btn-fa");
+  const btnEn = document.getElementById("btn-en");
   if (btnFa) btnFa.classList.toggle("active", lang === "fa");
   if (btnEn) btnEn.classList.toggle("active", lang === "en");
 
   const t = I18N[lang];
-  if (txtBrandTitle) txtBrandTitle.textContent = t.brandTitle;
-  if (tagCloud) tagCloud.textContent = t.tagCloud;
-  if (txtThemeLabel) txtThemeLabel.textContent = t.themeLabel;
-  if (txtLangLabel) txtLangLabel.textContent = t.langLabel;
-  if (lblCustomPrefix) lblCustomPrefix.textContent = t.prefixLabel;
-  if (lblProtocol) lblProtocol.textContent = t.protoLabel;
-  if (txtProtoWg) txtProtoWg.textContent = t.protoWg;
-  if (txtProtoUdp) txtProtoUdp.textContent = t.protoUdp;
-  if (txtProtoTcp) txtProtoTcp.textContent = t.protoTcp;
-  if (txtMainTitle) txtMainTitle.textContent = t.mainTitle;
-  if (txtMainSubtitle) txtMainSubtitle.textContent = t.mainSub;
+  const elMap = {
+    "txt-brand-title": t.brandTitle,
+    "tag-cloud": t.tagCloud,
+    "txt-theme-label": t.themeLabel,
+    "txt-lang-label": t.langLabel,
+    "lbl-custom-prefix": t.prefixLabel,
+    "lbl-protocol": t.protoLabel,
+    "txt-proto-wg": t.protoWg,
+    "txt-proto-udp": t.protoUdp,
+    "txt-proto-tcp": t.protoTcp,
+    "txt-main-title": t.mainTitle,
+    "txt-main-subtitle": t.mainSub,
+    "txt-apply": t.applyBtn,
+    "txt-footer-disclaimer": t.footerDisclaimer
+  };
+
+  for (const [id, val] of Object.entries(elMap)) {
+    const node = document.getElementById(id);
+    if (node) node.textContent = val;
+  }
+
+  const footOwn = document.getElementById("txt-footer-own");
+  if (footOwn) footOwn.innerHTML = t.footerOwn;
+
+  const searchBox = document.getElementById("search-box");
   if (searchBox) searchBox.placeholder = t.searchPlaceholder;
-  if (txtApply) txtApply.textContent = t.applyBtn;
-  if (txtFooterOwn) txtFooterOwn.innerHTML = t.footerOwn;
-  if (txtFooterDisclaimer) txtFooterDisclaimer.textContent = t.footerDisclaimer;
 
   renderServerList();
-}
-
-if (btnFa) btnFa.addEventListener("click", () => applyLanguage("fa"));
-if (btnEn) btnEn.addEventListener("click", () => applyLanguage("en"));
-
-if (btnApplyPrefix) {
-  btnApplyPrefix.addEventListener("click", () => {
-    if (customPrefix) activePrefix = customPrefix.value.trim() || "Sepansar";
-    renderServerList();
-    showToast(I18N[currentLang].toastPrefix);
-  });
-}
-
-document.querySelectorAll(".proto-card").forEach((card) => {
-  card.addEventListener("click", () => {
-    document.querySelectorAll(".proto-card").forEach((c) => c.classList.remove("active"));
-    card.classList.add("active");
-    currentProtocol = card.dataset.proto;
-    renderServerList();
-    showToast(`${I18N[currentLang].toastProto}: ${card.querySelector(".proto-title").textContent}`);
-  });
-});
-
-async function updateLiveLoads() {
-  try {
-    const res = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://api.protonvpn.ch/vpn/loads"));
-    if (res.ok) {
-      const data = await res.json();
-      const list = data.LogicalServerLoads || [];
-      const map = {};
-      list.forEach((item) => {
-        if (item.ID && item.Load !== undefined) {
-          const v = parseFloat(item.Load);
-          map[item.ID] = Math.round(v <= 1.0 ? v * 100 : v);
-        }
-      });
-      if (Object.keys(map).length > 0) {
-        serverDataset.forEach((srv) => {
-          if (srv.ID && map[srv.ID] !== undefined) {
-            srv.ActualLoad = map[srv.ID];
-          }
-        });
-        renderServerList();
-      }
-    }
-  } catch (e) {}
-}
-
-if (btnReload) {
-  btnReload.addEventListener("click", async () => {
-    btnReload.classList.add("spinning");
-    await updateLiveLoads();
-    btnReload.classList.remove("spinning");
-    showToast(I18N[currentLang].toastReload);
-  });
-}
-
-if (searchBox) searchBox.addEventListener("input", renderServerList);
-
-function loadServers() {
-  if (window.STATIC_SERVERS && Array.isArray(window.STATIC_SERVERS) && window.STATIC_SERVERS.length > 0) {
-    serverDataset = window.STATIC_SERVERS;
-    renderServerList();
-    updateLiveLoads();
-  } else {
-    if (statusCounter) statusCounter.textContent = I18N[currentLang].errConn;
-  }
 }
 
 function getCountryFlag(code) {
@@ -269,6 +185,7 @@ function getCountryFlag(code) {
 
 function renderServerList() {
   const t = I18N[currentLang];
+  const searchBox = document.getElementById("search-box");
   const query = searchBox ? searchBox.value.trim().toLowerCase() : "";
 
   const filtered = serverDataset.filter((s) => {
@@ -283,8 +200,11 @@ function renderServerList() {
     return l >= 100;
   }).length;
 
+  const statusCounter = document.getElementById("status-counter");
   if (statusCounter) statusCounter.textContent = `${filtered.length} ${t.statusReady}`;
   
+  const fullCounterBadge = document.getElementById("full-counter-badge");
+  const fullCounterText = document.getElementById("full-counter-text");
   if (fullCounterBadge && fullCounterText) {
     if (fullCount > 0) {
       fullCounterBadge.style.display = "flex";
@@ -294,8 +214,9 @@ function renderServerList() {
     }
   }
 
-  if (!tableWrapper) return;
-  tableWrapper.innerHTML = "";
+  const container = getContainer();
+  if (!container) return;
+  container.innerHTML = "";
 
   const groups = {};
   filtered.forEach((srv) => {
@@ -367,7 +288,7 @@ function renderServerList() {
 
     groupDiv.appendChild(header);
     groupDiv.appendChild(bodyDiv);
-    tableWrapper.appendChild(groupDiv);
+    container.appendChild(groupDiv);
   });
 }
 
@@ -456,5 +377,84 @@ function executeBlobDownload(filename, body) {
   URL.revokeObjectURL(anchor.href);
 }
 
-initTheme();
-loadServers();
+function setupListeners() {
+  const themeCheckbox = document.getElementById("theme-ios-checkbox");
+  if (themeCheckbox) {
+    themeCheckbox.addEventListener("change", () => {
+      const targetTheme = themeCheckbox.checked ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", targetTheme);
+      localStorage.setItem("sepansar_theme", targetTheme);
+    });
+  }
+
+  const btnFa = document.getElementById("btn-fa");
+  const btnEn = document.getElementById("btn-en");
+  if (btnFa) btnFa.addEventListener("click", () => applyLanguage("fa"));
+  if (btnEn) btnEn.addEventListener("click", () => applyLanguage("en"));
+
+  const btnApplyPrefix = document.getElementById("btn-apply-prefix");
+  const customPrefix = document.getElementById("custom-prefix");
+  if (btnApplyPrefix) {
+    btnApplyPrefix.addEventListener("click", () => {
+      if (customPrefix) activePrefix = customPrefix.value.trim() || "Sepansar";
+      renderServerList();
+      showToast(I18N[currentLang].toastPrefix);
+    });
+  }
+
+  document.querySelectorAll(".proto-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      document.querySelectorAll(".proto-card").forEach((c) => c.classList.remove("active"));
+      card.classList.add("active");
+      currentProtocol = card.dataset.proto;
+      renderServerList();
+      showToast(`${I18N[currentLang].toastProto}: ${card.querySelector(".proto-title").textContent}`);
+    });
+  });
+
+  const btnReload = document.getElementById("btn-reload");
+  if (btnReload) {
+    btnReload.addEventListener("click", () => {
+      btnReload.classList.add("spinning");
+      const s = document.createElement("script");
+      s.src = "servers.js?t=" + Date.now();
+      s.onload = () => {
+        btnReload.classList.remove("spinning");
+        if (window.STATIC_SERVERS) {
+          serverDataset = window.STATIC_SERVERS;
+          renderServerList();
+        }
+        showToast(I18N[currentLang].toastReload);
+      };
+      document.body.appendChild(s);
+    });
+  }
+
+  const searchBox = document.getElementById("search-box");
+  if (searchBox) searchBox.addEventListener("input", renderServerList);
+}
+
+function initApp() {
+  initTheme();
+  setupListeners();
+
+  let attempts = 0;
+  const checkInterval = setInterval(() => {
+    attempts++;
+    if (window.STATIC_SERVERS && Array.isArray(window.STATIC_SERVERS) && window.STATIC_SERVERS.length > 0) {
+      clearInterval(checkInterval);
+      serverDataset = window.STATIC_SERVERS;
+      renderServerList();
+    } else if (attempts > 30) {
+      clearInterval(checkInterval);
+      const statusCounter = document.getElementById("status-counter");
+      if (statusCounter) statusCounter.textContent = I18N[currentLang].errConn;
+    }
+  }, 100);
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initApp);
+} else {
+  initApp();
+}
