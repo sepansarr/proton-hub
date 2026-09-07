@@ -15,42 +15,41 @@ HEADERS = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 }
 
-def is_free_server(s):
-    name = s.get("Name", "").upper()
-    tier = s.get("Tier", 0)
-    if "FREE" in name or tier == 0:
-        return True
-    return False
+def extract_servers_from_response(data):
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        if "LogicalServers" in data:
+            return data["LogicalServers"]
+        if "Servers" in data:
+            return data["Servers"]
+    return []
 
 def fetch_servers():
-    url = "https://account.protonvpn.com/api/vpn/v2/logicals"
-    try:
-        res = requests.get(url, headers=HEADERS, timeout=20)
-        if res.status_code == 200:
-            servers = res.json().get("LogicalServers", [])
-            active = [s for s in servers if s.get("Status") == 1]
-            free = [s for s in active if is_free_server(s)]
-            if free:
-                return free
-            if active:
-                return active
-    except Exception:
-        pass
+    endpoints = [
+        ("https://account.proton.me/api/vpn/v2/logicals", HEADERS),
+        ("https://account.protonvpn.com/api/vpn/v2/logicals", HEADERS),
+        ("https://api.protonvpn.ch/vpn/logicals", {"x-pm-appversion": "Other"}),
+        ("https://api.protonmail.ch/vpn/logicals", {"x-pm-appversion": "Other"})
+    ]
 
-    fallback_url = "https://api.protonvpn.ch/vpn/logicals"
-    try:
-        res_fb = requests.get(fallback_url, headers={"x-pm-appversion": "Other"}, timeout=20)
-        if res_fb.status_code == 200:
-            servers_fb = res_fb.json().get("LogicalServers", [])
-            active_fb = [s for s in servers_fb if s.get("Status") == 1]
-            free_fb = [s for s in active_fb if is_free_server(s)]
-            if free_fb:
-                return free_fb
-            if active_fb:
-                return active_fb
-    except Exception:
-        pass
-
+    for url, headers in endpoints:
+        try:
+            res = requests.get(url, headers=headers, timeout=15)
+            if res.status_code == 200:
+                raw_servers = extract_servers_from_response(res.json())
+                if raw_servers:
+                    active = [s for s in raw_servers if s.get("Status", 1) == 1]
+                    free = [
+                        s for s in active 
+                        if s.get("Tier") == 0 or "FREE" in str(s.get("Name", "")).upper()
+                    ]
+                    if free:
+                        return free
+                    if active:
+                        return active
+        except Exception:
+            continue
     return []
 
 def main():
