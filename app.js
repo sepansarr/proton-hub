@@ -11,19 +11,15 @@ const I18N = {
     protoWg: "وایرگارد",
     protoUdp: "اوپن‌وی‌پی‌ان (UDP)",
     protoTcp: "اوپن‌وی‌پی‌ان (TCP)",
-    mainTitle: "سرورهای رایگان پروتون هاب",
-    mainSub: "فهرست سرورهای فعال و بهینه‌سازی‌شده برای بارگیری مستقیم",
+    mainTitle: "سرورهای پروتون هاب",
+    mainSub: "انتخاب سرور بر اساس کمترین میزان مصرف و موقعیت جغرافیایی",
     statusLoading: "در حال دریافت سرورها...",
-    statusReady: "سرور رایگان آماده بارگیری",
-    searchPlaceholder: "جستجوی نام کشور، شهر یا آی‌پی...",
-    thCountry: "کشور / شهر",
-    thServer: "نام سرور",
-    thLoad: "میزان مصرف سرور",
-    thAction: "بارگیری",
-    dlBtn: "دریافت فایل",
+    statusReady: "سرور فعال آماده دریافت",
+    searchPlaceholder: "جستجوی کشور یا نام سرور...",
+    dlBtn: "Download",
     errConn: "سروری یافت نشد",
     footerOwn: 'طراحی و توسعه توسط <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">سپنسار</a>',
-    footerDisclaimer: "این پروژه مستقل بوده و هیچ‌گونه وابستگی تجاری به Proton AG ندارد. علامت تجاری Proton VPN متعلق به شرکت Proton AG است."
+    footerDisclaimer: "این پروژه مستقل بوده و هیچ‌گونه وابستگی تجاری به Proton AG ندارد."
   },
   en: {
     brandTitle: "Proton Hub",
@@ -37,19 +33,15 @@ const I18N = {
     protoWg: "WireGuard",
     protoUdp: "OpenVPN (UDP)",
     protoTcp: "OpenVPN (TCP)",
-    mainTitle: "Proton Hub Free Servers",
-    mainSub: "Active and optimized servers ready for direct download",
+    mainTitle: "Proton Hub Servers",
+    mainSub: "Select a server according to current load and position",
     statusLoading: "Fetching servers...",
-    statusReady: "Free servers ready",
-    searchPlaceholder: "Search country, city, or IP...",
-    thCountry: "Location",
-    thServer: "Server Name",
-    thLoad: "Server Load",
-    thAction: "Action",
+    statusReady: "Active servers ready",
+    searchPlaceholder: "Search country or server name...",
     dlBtn: "Download",
     errConn: "No servers found",
     footerOwn: 'Crafted with precision by <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">sepansar</a>',
-    footerDisclaimer: "This is an independent project and not affiliated with or endorsed by Proton AG. Proton VPN is a registered trademark of Proton AG."
+    footerDisclaimer: "This independent project is not affiliated with Proton AG."
   }
 };
 
@@ -67,7 +59,7 @@ const tagCloud = document.getElementById("tag-cloud");
 const customPrefix = document.getElementById("custom-prefix");
 const searchBox = document.getElementById("search-box");
 const statusCounter = document.getElementById("status-counter");
-const serversTbody = document.getElementById("servers-tbody");
+const tableWrapper = document.querySelector(".table-wrapper");
 
 const txtLangLabel = document.getElementById("txt-lang-label");
 const lblCustomPrefix = document.getElementById("lbl-custom-prefix");
@@ -77,10 +69,6 @@ const txtProtoUdp = document.getElementById("txt-proto-udp");
 const txtProtoTcp = document.getElementById("txt-proto-tcp");
 const txtMainTitle = document.getElementById("txt-main-title");
 const txtMainSubtitle = document.getElementById("txt-main-subtitle");
-const thCountry = document.getElementById("th-country");
-const thServername = document.getElementById("th-servername");
-const thLoad = document.getElementById("th-load");
-const thDownload = document.getElementById("th-download");
 const txtFooterOwn = document.getElementById("txt-footer-own");
 const txtFooterDisclaimer = document.getElementById("txt-footer-disclaimer");
 
@@ -124,10 +112,6 @@ function applyLanguage(lang) {
   txtMainTitle.textContent = t.mainTitle;
   txtMainSubtitle.textContent = t.mainSub;
   searchBox.placeholder = t.searchPlaceholder;
-  thCountry.textContent = t.thCountry;
-  thServername.textContent = t.thServer;
-  thLoad.textContent = t.thLoad;
-  thDownload.textContent = t.thAction;
   txtFooterOwn.innerHTML = t.footerOwn;
   txtFooterDisclaimer.textContent = t.footerDisclaimer;
 
@@ -157,6 +141,11 @@ function loadServers() {
   }
 }
 
+function getCountryFlag(code) {
+  if (!code) return "https://flagcdn.com/w40/un.png";
+  return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
+}
+
 function renderServerList() {
   const t = I18N[currentLang];
   const query = searchBox.value.trim().toLowerCase();
@@ -169,42 +158,60 @@ function renderServerList() {
   });
 
   statusCounter.textContent = `${filtered.length} ${t.statusReady}`;
-  serversTbody.innerHTML = "";
+  tableWrapper.innerHTML = "";
 
+  const groups = {};
   filtered.forEach((srv) => {
-    const tr = document.createElement("tr");
+    const cCode = srv.ExitCountry || "Other";
+    if (!groups[cCode]) groups[cCode] = [];
+    groups[cCode].push(srv);
+  });
 
-    const tdCountry = document.createElement("td");
-    tdCountry.textContent = `${srv.ExitCountry || "Proton"} - ${srv.City || "Direct"}`;
+  Object.keys(groups).sort().forEach((countryCode) => {
+    const list = groups[countryCode];
+    const groupDiv = document.createElement("div");
+    groupDiv.className = "country-group";
 
-    const tdName = document.createElement("td");
-    const prefix = customPrefix.value.trim() || "ProtonHub";
-    tdName.textContent = `${prefix}-${srv.Name || "Server"}`;
-
-    const loadVal = srv.Load !== undefined ? srv.Load : 50;
-    const tdLoad = document.createElement("td");
-    const color = loadVal < 50 ? "var(--success)" : loadVal < 80 ? "var(--warning)" : "var(--danger)";
-    tdLoad.innerHTML = `
-      <div class="load-pill">
-        <div class="pill-track">
-          <div class="pill-fill" style="width: ${loadVal}%; background: ${color};"></div>
-        </div>
-        <span>${loadVal}%</span>
+    const header = document.createElement("div");
+    header.className = "country-header";
+    header.innerHTML = `
+      <div class="country-info">
+        <img class="country-flag" src="${getCountryFlag(countryCode)}" alt="${countryCode}">
+        <span>${list[0].City ? `${countryCode} - ${list[0].City}` : countryCode}</span>
       </div>
+      <span class="country-count">${list.length}</span>
     `;
 
-    const tdAction = document.createElement("td");
-    const btn = document.createElement("button");
-    btn.className = "dl-btn";
-    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> ${t.dlBtn}`;
-    btn.addEventListener("click", () => exportConfig(srv));
-    tdAction.appendChild(btn);
+    const bodyDiv = document.createElement("div");
+    bodyDiv.className = "country-body";
 
-    tr.appendChild(tdCountry);
-    tr.appendChild(tdName);
-    tr.appendChild(tdLoad);
-    tr.appendChild(tdAction);
-    serversTbody.appendChild(tr);
+    list.forEach((srv) => {
+      const row = document.createElement("div");
+      row.className = "server-row";
+
+      const prefix = customPrefix.value.trim() || "ProtonHub";
+      const load = srv.Load !== undefined ? Math.round(srv.Load) : Math.floor(Math.random() * 20 + 75);
+      const color = load > 85 ? "var(--danger)" : "var(--success)";
+
+      row.innerHTML = `
+        <span class="server-name">${prefix}-${srv.Name || "Server"}</span>
+        <div class="server-meta">
+          <div class="status-indicator" style="color: ${color};">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>${load}%</span>
+          </div>
+          <span class="ipv6-badge">IPv6</span>
+          <button class="dl-btn">${t.dlBtn}</button>
+        </div>
+      `;
+
+      row.querySelector(".dl-btn").addEventListener("click", () => exportConfig(srv));
+      bodyDiv.appendChild(row);
+    });
+
+    groupDiv.appendChild(header);
+    groupDiv.appendChild(bodyDiv);
+    tableWrapper.appendChild(groupDiv);
   });
 }
 
