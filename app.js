@@ -1,51 +1,51 @@
 const I18N = {
   fa: {
     brandTitle: "پروتون هاب",
-    tagCloud: "ژنراتور رسمی سرورها",
+    tagCloud: "ژنراتور پیشرفته کانفیگ",
     themeLabel: "حالت نمایش",
     langLabel: "زبان سامانه",
-    prefixLabel: "پیشوند فایل کانفیگ",
-    protoLabel: "نوع پروتکل ارتباطی",
-    protoWg: "WireGuard",
-    protoUdp: "OpenVPN (UDP)",
-    protoTcp: "OpenVPN (TCP)",
+    prefixLabel: "پیشوند نام کانفیگ",
+    protoLabel: "پروتکل خروجی",
+    protoWg: "وایرگارد (WireGuard)",
+    protoUdp: "اوپن‌وی‌پی‌ان (UDP)",
+    protoTcp: "اوپن‌وی‌پی‌ان (TCP)",
     mainTitle: "سرورهای رسمی پروتون",
     mainSub: "فهرست کانفیگ‌های فعال با محاسبه بار زنده شبکه",
     statusLoading: "در حال دریافت داده‌ها...",
-    statusReady: "سرور آماده",
+    statusReady: "سرور فعال رایگان",
     fullServers: "سرور پر (100%)",
-    searchPlaceholder: "جستجوی نام کشور یا کد سرور...",
+    searchPlaceholder: "جستجوی کشور یا نام سرور...",
     dlBtn: "دریافت فایل",
     applyBtn: "اعمال",
     errConn: "سروری یافت نشد",
-    toastPrefix: "پیشوند نام فایل اعمال شد",
+    toastPrefix: "پیشوند نام کانفیگ‌ها با موفقیت اعمال شد",
     toastProto: "پروتکل خروجی تغییر یافت",
-    toastReload: "درصدهای بار ترافیکی به‌روزرسانی شدند",
-    footerOwn: 'توسعه توسط <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">سپنسار</a>',
-    footerDisclaimer: "این پروژه مستقل بوده و هیچ وابستگی رسمی به Proton AG ندارد."
+    toastReload: "فهرست سرورها به‌روزرسانی شد",
+    footerOwn: 'طراحی و توسعه توسط <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">سپنسار</a>',
+    footerDisclaimer: "این پروژه مستقل بوده و هیچ‌گونه وابستگی تجاری به Proton AG ندارد."
   },
   en: {
     brandTitle: "Proton Hub",
-    tagCloud: "Official Config Generator",
-    themeLabel: "Theme Mode",
+    tagCloud: "Advanced Config Generator",
+    themeLabel: "Appearance",
     langLabel: "Language",
-    prefixLabel: "Config File Prefix",
+    prefixLabel: "Config Prefix",
     protoLabel: "Export Protocol",
     protoWg: "WireGuard",
     protoUdp: "OpenVPN (UDP)",
     protoTcp: "OpenVPN (TCP)",
     mainTitle: "Proton Official Servers",
-    mainSub: "Active server inventory with real-time network load",
-    statusLoading: "Loading inventory...",
-    statusReady: "Ready Servers",
-    fullServers: "Full Capacity (100%)",
-    searchPlaceholder: "Search country or server code...",
+    mainSub: "Active free server inventory with real-time network load",
+    statusLoading: "Loading servers...",
+    statusReady: "Active Free Servers",
+    fullServers: "Full Capacity Servers (100%)",
+    searchPlaceholder: "Search country or server name...",
     dlBtn: "Download",
     applyBtn: "Apply",
     errConn: "No servers found",
-    toastPrefix: "File prefix updated",
-    toastProto: "Protocol switched",
-    toastReload: "Server loads refreshed",
+    toastPrefix: "Filename prefix applied",
+    toastProto: "Protocol changed",
+    toastReload: "Servers refreshed",
     footerOwn: 'Crafted with precision by <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">sepansar</a>',
     footerDisclaimer: "This independent project is not affiliated with Proton AG."
   }
@@ -129,17 +129,28 @@ const statusCounter = document.getElementById("status-counter");
 const fullCounterBadge = document.getElementById("full-counter-badge");
 const fullCounterText = document.getElementById("full-counter-text");
 const btnReload = document.getElementById("btn-reload");
+const tableWrapper = document.querySelector(".table-wrapper");
 const toast = document.getElementById("toast");
 
-function getContainer() {
-  return document.querySelector(".server-deck-wrapper") || document.querySelector(".table-wrapper") || document.body;
-}
+const txtBrandTitle = document.getElementById("txt-brand-title");
+const tagCloud = document.getElementById("tag-cloud");
+const txtThemeLabel = document.getElementById("txt-theme-label");
+const txtLangLabel = document.getElementById("txt-lang-label");
+const lblCustomPrefix = document.getElementById("lbl-custom-prefix");
+const lblProtocol = document.getElementById("lbl-protocol");
+const txtProtoWg = document.getElementById("txt-proto-wg");
+const txtProtoUdp = document.getElementById("txt-proto-udp");
+const txtProtoTcp = document.getElementById("txt-proto-tcp");
+const txtMainTitle = document.getElementById("txt-main-title");
+const txtMainSubtitle = document.getElementById("txt-main-subtitle");
+const txtFooterOwn = document.getElementById("txt-footer-own");
+const txtFooterDisclaimer = document.getElementById("txt-footer-disclaimer");
 
-function triggerToast(msg) {
+function showToast(msg) {
   if (!toast) return;
   toast.textContent = msg;
-  toast.classList.add("active");
-  setTimeout(() => toast.classList.remove("active"), 2200);
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 2500);
 }
 
 function initTheme() {
@@ -165,33 +176,23 @@ function applyLanguage(lang) {
   if (btnEn) btnEn.classList.toggle("active", lang === "en");
 
   const t = I18N[lang];
-  const elMap = {
-    "txt-brand-title": t.brandTitle,
-    "tag-cloud": t.tagCloud,
-    "txt-theme-label": t.themeLabel,
-    "txt-lang-label": t.langLabel,
-    "lbl-custom-prefix": t.prefixLabel,
-    "lbl-protocol": t.protoLabel,
-    "txt-proto-wg": t.protoWg,
-    "txt-proto-udp": t.protoUdp,
-    "txt-proto-tcp": t.protoTcp,
-    "txt-main-title": t.mainTitle,
-    "txt-main-subtitle": t.mainSub,
-    "txt-apply": t.applyBtn,
-    "txt-footer-disclaimer": t.footerDisclaimer
-  };
-
-  for (const [id, val] of Object.entries(elMap)) {
-    const node = document.getElementById(id);
-    if (node) node.textContent = val;
-  }
-
-  const footOwn = document.getElementById("txt-footer-own");
-  if (footOwn) footOwn.innerHTML = t.footerOwn;
-
+  if (txtBrandTitle) txtBrandTitle.textContent = t.brandTitle;
+  if (tagCloud) tagCloud.textContent = t.tagCloud;
+  if (txtThemeLabel) txtThemeLabel.textContent = t.themeLabel;
+  if (txtLangLabel) txtLangLabel.textContent = t.langLabel;
+  if (lblCustomPrefix) lblCustomPrefix.textContent = t.prefixLabel;
+  if (lblProtocol) lblProtocol.textContent = t.protoLabel;
+  if (txtProtoWg) txtProtoWg.textContent = t.protoWg;
+  if (txtProtoUdp) txtProtoUdp.textContent = t.protoUdp;
+  if (txtProtoTcp) txtProtoTcp.textContent = t.protoTcp;
+  if (txtMainTitle) txtMainTitle.textContent = t.mainTitle;
+  if (txtMainSubtitle) txtMainSubtitle.textContent = t.mainSub;
   if (searchBox) searchBox.placeholder = t.searchPlaceholder;
+  if (txtApply) txtApply.textContent = t.applyBtn;
+  if (txtFooterOwn) txtFooterOwn.innerHTML = t.footerOwn;
+  if (txtFooterDisclaimer) txtFooterDisclaimer.textContent = t.footerDisclaimer;
 
-  renderServers();
+  renderServerList();
 }
 
 if (btnFa) btnFa.addEventListener("click", () => applyLanguage("fa"));
@@ -200,82 +201,73 @@ if (btnEn) btnEn.addEventListener("click", () => applyLanguage("en"));
 if (btnApplyPrefix) {
   btnApplyPrefix.addEventListener("click", () => {
     if (customPrefix) activePrefix = customPrefix.value.trim() || "Sepansar";
-    renderServers();
-    triggerToast(I18N[currentLang].toastPrefix);
+    renderServerList();
+    showToast(I18N[currentLang].toastPrefix);
   });
 }
 
-document.querySelectorAll(".protocol-tile, .proto-card").forEach((tile) => {
-  tile.addEventListener("click", () => {
-    document.querySelectorAll(".protocol-tile, .proto-card").forEach((c) => c.classList.remove("active"));
-    tile.classList.add("active");
-    currentProtocol = tile.dataset.proto;
-    renderServers();
-    triggerToast(I18N[currentLang].toastProto);
+document.querySelectorAll(".proto-card").forEach((card) => {
+  card.addEventListener("click", () => {
+    document.querySelectorAll(".proto-card").forEach((c) => c.classList.remove("active"));
+    card.classList.add("active");
+    currentProtocol = card.dataset.proto;
+    renderServerList();
+    showToast(`${I18N[currentLang].toastProto}: ${card.querySelector(".proto-title").textContent}`);
   });
 });
 
-async function fetchLiveLoads() {
+async function updateLiveLoads() {
   try {
-    const proxies = [
-      "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://api.protonvpn.ch/vpn/loads"),
-      "https://corsproxy.io/?" + encodeURIComponent("https://api.protonvpn.ch/vpn/loads")
-    ];
-    for (const pUrl of proxies) {
-      try {
-        const res = await fetch(pUrl, { cache: "no-cache" });
-        if (res.ok) {
-          const data = await res.json();
-          const loadsList = data.LogicalServerLoads || [];
-          const loadMap = {};
-          loadsList.forEach((itm) => {
-            if (itm.ID && itm.Load !== undefined) {
-              const raw = parseFloat(itm.Load);
-              loadMap[itm.ID] = Math.round(raw <= 1.0 ? raw * 100 : raw);
-            }
-          });
-          if (Object.keys(loadMap).length > 0) {
-            serverDataset.forEach((s) => {
-              if (s.ID && loadMap[s.ID] !== undefined) {
-                s.ActualLoad = loadMap[s.ID];
-              }
-            });
-            renderServers();
-            break;
-          }
+    const res = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent("https://api.protonvpn.ch/vpn/loads"));
+    if (res.ok) {
+      const data = await res.json();
+      const list = data.LogicalServerLoads || [];
+      const map = {};
+      list.forEach((item) => {
+        if (item.ID && item.Load !== undefined) {
+          const v = parseFloat(item.Load);
+          map[item.ID] = Math.round(v <= 1.0 ? v * 100 : v);
         }
-      } catch (e) {}
+      });
+      if (Object.keys(map).length > 0) {
+        serverDataset.forEach((srv) => {
+          if (srv.ID && map[srv.ID] !== undefined) {
+            srv.ActualLoad = map[srv.ID];
+          }
+        });
+        renderServerList();
+      }
     }
-  } catch (err) {}
+  } catch (e) {}
 }
 
 if (btnReload) {
   btnReload.addEventListener("click", async () => {
     btnReload.classList.add("spinning");
-    await fetchLiveLoads();
+    await updateLiveLoads();
     btnReload.classList.remove("spinning");
-    triggerToast(I18N[currentLang].toastReload);
+    showToast(I18N[currentLang].toastReload);
   });
 }
 
-if (searchBox) searchBox.addEventListener("input", renderServers);
+if (searchBox) searchBox.addEventListener("input", renderServerList);
 
 function loadServers() {
   if (window.STATIC_SERVERS && Array.isArray(window.STATIC_SERVERS) && window.STATIC_SERVERS.length > 0) {
     serverDataset = window.STATIC_SERVERS;
-    renderServers();
-    fetchLiveLoads();
+    renderServerList();
+    updateLiveLoads();
   } else {
     if (statusCounter) statusCounter.textContent = I18N[currentLang].errConn;
   }
 }
 
-function resolveFlag(code) {
+function getCountryFlag(code) {
   if (!code || code.length !== 2) return "https://flagcdn.com/w40/un.png";
   return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 }
 
-function renderServers() {
+function renderServerList() {
   const t = I18N[currentLang];
   const query = searchBox ? searchBox.value.trim().toLowerCase() : "";
 
@@ -302,9 +294,8 @@ function renderServers() {
     }
   }
 
-  const container = getContainer();
-  if (!container) return;
-  container.innerHTML = "";
+  if (!tableWrapper) return;
+  tableWrapper.innerHTML = "";
 
   const groups = {};
   filtered.forEach((srv) => {
@@ -318,69 +309,69 @@ function renderServers() {
     const groupDiv = document.createElement("div");
     
     const isOpen = openGroups[countryCode] !== undefined ? openGroups[countryCode] : false;
-    groupDiv.className = `accordion-item country-group ${isOpen ? "expanded open" : ""}`;
+    groupDiv.className = `country-group ${isOpen ? "open" : ""}`;
 
     const countryName = COUNTRY_NAMES[countryCode] || countryCode;
 
-    const trigger = document.createElement("div");
-    trigger.className = "accordion-trigger country-header";
-    trigger.innerHTML = `
-      <div class="country-details country-info">
-        <img class="national-flag country-flag" src="${resolveFlag(countryCode)}" alt="${countryCode}">
+    const header = document.createElement("div");
+    header.className = "country-header";
+    header.innerHTML = `
+      <div class="country-info">
+        <img class="country-flag" src="${getCountryFlag(countryCode)}" alt="${countryCode}">
         <span>${countryName}</span>
       </div>
-      <div class="accordion-controls country-header-actions">
-        <span class="badge-count country-count">${list.length}</span>
-        <svg class="chevron-icon arrow-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      <div class="country-header-actions">
+        <span class="country-count">${list.length}</span>
+        <svg class="arrow-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
     `;
 
-    trigger.addEventListener("click", () => {
-      const state = groupDiv.classList.toggle("expanded");
-      groupDiv.classList.toggle("open", state);
-      openGroups[countryCode] = state;
+    header.addEventListener("click", () => {
+      const nowOpen = groupDiv.classList.toggle("open");
+      openGroups[countryCode] = nowOpen;
     });
 
-    const content = document.createElement("div");
-    content.className = "accordion-content country-body";
+    const bodyDiv = document.createElement("div");
+    bodyDiv.className = "country-body";
 
     list.forEach((srv) => {
       const row = document.createElement("div");
-      row.className = "server-entry server-row";
+      row.className = "server-row";
 
       const ext = currentProtocol === "wireguard" ? ".conf" : ".ovpn";
       const displayName = `${activePrefix}-${srv.Name}${ext}`;
       
       const load = srv.ActualLoad !== undefined ? srv.ActualLoad : (srv.Load !== undefined ? Math.round(srv.Load) : 80);
       const color = load >= 100 ? "var(--danger)" : load > 85 ? "var(--warning)" : "var(--success)";
+
       const hasIpv6 = Boolean(srv.Features && (srv.Features & 16 || srv.Features & 32));
 
       row.innerHTML = `
-        <span class="server-label server-name">${displayName}</span>
-        <div class="server-stats server-meta">
-          <div class="load-gauge status-indicator" style="color: ${color};">
+        <span class="server-name">${displayName}</span>
+        <div class="server-meta">
+          <div class="status-indicator" style="color: ${color};">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <span>${load}%</span>
           </div>
-          ${hasIpv6 ? '<span class="tag-ipv6 ipv6-badge">IPv6</span>' : ''}
-          <button class="btn-download-server dl-btn">
+          ${hasIpv6 ? '<span class="ipv6-badge">IPv6</span>' : ''}
+          <button class="dl-btn">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             <span>${t.dlBtn}</span>
           </button>
         </div>
       `;
 
-      row.querySelector(".btn-download-server, .dl-btn").addEventListener("click", () => emitConfig(srv));
-      content.appendChild(row);
+      row.querySelector(".dl-btn").addEventListener("click", () => exportConfig(srv));
+      bodyDiv.appendChild(row);
     });
 
-    groupDiv.appendChild(trigger);
-    groupDiv.appendChild(content);
-    container.appendChild(groupDiv);
+    groupDiv.appendChild(header);
+    groupDiv.appendChild(bodyDiv);
+    tableWrapper.appendChild(groupDiv);
   });
 }
 
-function emitConfig(srv) {
+function exportConfig(srv) {
   const finalFilename = `${activePrefix}-${srv.Name}`;
   const ip = srv.Servers && srv.Servers[0] ? srv.Servers[0].EntryIP : srv.Domain;
   const cfg = window.SECRET_CONFIG || { user: "username", pass: "password", wgPrivate: "UKZg5sKBtmgXRYbp8lugpdRnBwYzKfuWqsjeH/aKrU0=" };
@@ -402,7 +393,7 @@ AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = ${ip}:51820
 PersistentKeepalive = 25
 `[cite: 5];
-    streamBlobDownload(`${finalFilename}.conf`, payload);
+    executeBlobDownload(`${finalFilename}.conf`, payload);
   } else {
     const isTcp = currentProtocol === "openvpn-tcp";
     const proto = isTcp ? "tcp" : "udp";
@@ -450,11 +441,11 @@ ${OFFICIAL_CA}
 ${OFFICIAL_TLS_CRYPT}
 </tls-crypt>
 `[cite: 4];
-    streamBlobDownload(`${finalFilename}.ovpn`, payload);
+    executeBlobDownload(`${finalFilename}.ovpn`, payload);
   }
 }
 
-function streamBlobDownload(filename, body) {
+function executeBlobDownload(filename, body) {
   const blob = new Blob([body], { type: "text/plain;charset=utf-8" });
   const anchor = document.createElement("a");
   anchor.href = URL.createObjectURL(blob);
