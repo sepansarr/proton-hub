@@ -1,66 +1,124 @@
 const I18N = {
   fa: {
     brandTitle: "پروتون هاب",
-    tagCloud: "تولیدکننده کانفیگ",
+    tagCloud: "ژنراتور حرفه‌ای کانفیگ",
     themeLabel: "حالت نمایش",
-    themeDark: "حالت تیره",
-    themeLight: "حالت روشن",
     langLabel: "زبان سامانه",
-    prefixLabel: "پیشوند نام فایل کانفیگ",
-    protoLabel: "نوع پروتکل ارتباطی",
-    protoWg: "وایرگارد",
+    prefixLabel: "پیشوند نام کانفیگ",
+    protoLabel: "پروتکل فعال خروجی",
+    protoWg: "وایرگارد (WireGuard)",
     protoUdp: "اوپن‌وی‌پی‌ان (UDP)",
     protoTcp: "اوپن‌وی‌پی‌ان (TCP)",
-    mainTitle: "سرورهای پروتون هاب",
-    mainSub: "انتخاب سرور بر اساس کمترین میزان مصرف و موقعیت جغرافیایی",
+    mainTitle: "سرورهای رسمی پروتون",
+    mainSub: "فهرست کانفیگ‌های فعال با محاسبه بار زنده شبکه",
     statusLoading: "در حال دریافت سرورها...",
     statusReady: "سرور فعال آماده دریافت",
-    searchPlaceholder: "جستجوی کشور یا نام سرور...",
-    dlBtn: "دانلود فایل",
+    searchPlaceholder: "جستجوی کشور، شهر یا نام سرور...",
+    dlBtn: "دریافت فایل",
+    applyBtn: "اعمال",
     errConn: "سروری یافت نشد",
+    toastPrefix: "پیشوند نام فایل‌ها با موفقیت اعمال شد",
+    toastProto: "پروتکل خروجی با موفقیت تغییر یافت",
     footerOwn: 'طراحی و توسعه توسط <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">سپنسار</a>',
-    footerDisclaimer: "این پروژه مستقل بوده و هیچ‌گونه وابستگی تجاری به Proton AG ندارد."
+    footerDisclaimer: "این پروژه مستقل بوده و هیچ‌گونه وابستگی به Proton AG ندارد."
   },
   en: {
     brandTitle: "Proton Hub",
-    tagCloud: "Config Generator",
+    tagCloud: "Pro Config Generator",
     themeLabel: "Appearance",
-    themeDark: "Dark Mode",
-    themeLight: "Light Mode",
     langLabel: "Language",
     prefixLabel: "Config File Prefix",
-    protoLabel: "Protocol Type",
+    protoLabel: "Active Export Protocol",
     protoWg: "WireGuard",
     protoUdp: "OpenVPN (UDP)",
     protoTcp: "OpenVPN (TCP)",
-    mainTitle: "Proton Hub Servers",
-    mainSub: "Select a server according to current load and position",
+    mainTitle: "Proton Official Servers",
+    mainSub: "Active server inventory with real-time network load",
     statusLoading: "Fetching servers...",
     statusReady: "Active servers ready",
-    searchPlaceholder: "Search country or server name...",
+    searchPlaceholder: "Search country, city, or server...",
     dlBtn: "Download",
+    applyBtn: "Apply",
     errConn: "No servers found",
+    toastPrefix: "Filename prefix updated successfully",
+    toastProto: "Export protocol switched successfully",
     footerOwn: 'Crafted with precision by <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">sepansar</a>',
     footerDisclaimer: "This independent project is not affiliated with Proton AG."
   }
 };
 
+const OFFICIAL_CA = `-----BEGIN CERTIFICATE-----
+MIIFnTCCA4WgAwIBAgIUCI574SM3Lyh47GyNl0WAOYrqb5QwDQYJKoZIhvcNAQEL
+BQAwXjELMAkGA1UEBhMCQ0gxHzAdBgNVBAoMFlByb3RvbiBUZWNobm9sb2dpZXMg
+QUcxEjAQBgNVBAsMCVByb3RvblZQTjEaMBgGA1UEAwwRUHJvdG9uVlBOIFJvb3Qg
+Q0EwHhcNMTkxMDE3MDgwNjQxWhcNMzkxMDEyMDgwNjQxWjBeMQswCQYDVQQGEwJD
+SDEfMB0GA1UECgwWUHJvdG9uIFRlY2hub2xvZ2llcyBBRzESMBAGA1UECwwJUHJv
+dG9uVlBOMRowGAYDVQQDDBFQcm90b25WUE4gUm9vdCBDQTCCAiIwDQYJKoZIhvcN
+AQEBBQADggIPADCCAgoCggIBAMkUT7zMUS5C+NjQ7YoGpVFlfbN9HFgG4JiKfHB8
+QxnPPRgyTi0zVOAj1ImsRilauY8Ddm5dQtd8qcApoz6oCx5cFiiSQG2uyhS/59Zl
+5wqIkw1o+CgwZgeWkq04lcrxhhfPgJZRFjrYVezy/Z2Ssd18s3/FFNQ+2iV1KC2K
+z8eSPr50u+l9vEKsKiNGkJTdlWjoDKZM2C15i/h8Smi+PdJlx7WMTtYoVC1Fzq0r
+aCPDQl18kspu11b6d8ECPWghKcDIIKuA0r0nGqF1GvH1AmbC/xUaNrKgz9AfioZL
+MP/l22tVG3KKM1ku0eYHX7NzNHgkM2JKnBBannImQQBGTAcvvUlnfF3AHx4vzx7H
+ahpBz8ebThx2uv+vzu8lCVEcKjQObGwLbAONJN2enug8hwSSZQv7tz7onDQWlYh0
+El5fnkrEQGbukNnSyOqTwfobvBllIPzBqdO38eZFA0YTlH9plYjIjPjGl931lFAA
+3G9t0x7nxAauLXN5QVp1yoF1tzXc5kN0SFAasM9VtVEOSMaGHLKhF+IMyVX8h5Iu
+IRC8u5O672r7cHS+Dtx87LjxypqNhmbf1TWyLJSoh0qYhMr+BbO7+N6zKRIZPI5b
+MXc8Be2pQwbSA4ZrDvSjFC9yDXmSuZTyVo6Bqi/KCUZeaXKof68oNxVYeGowNeQd
+g/znAgMBAAGjUzBRMB0GA1UdDgQWBBR44WtTuEKCaPPUltYEHZoyhJo+4TAfBgNV
+HSMEGDAWgBR44WtTuEKCaPPUltYEHZoyhJo+4TAPBgNVHRMBAf8EBTADAQH/MA0G
+CSqGSIb3DQEBCwUAA4ICAQBBmzCQlHxOJ6izys3TVpaze+rUkA9GejgsB2DZXIcm
+4Lj/SNzQsPlZRu4S0IZV253dbE1DoWlHanw5lnXwx8iU82X7jdm/5uZOwj2NqSqT
+bTn0WLAC6khEKKe5bPTf18UOcwN82Le3AnkwcNAaBO5/TzFQVgnVedXr2g6rmpp9
+gdedeEl9acB7xqfYfkrmijqYMm+xeG2rXaanch3HjweMDuZdT/Ub5G6oir0Kowft
+lA1ytjXRg+X+yWymTpF/zGLYfSodWWjMKhpzZtRJZ+9B0pWXUyY7SuCj5T5SMIAu
+x3NQQ46wSbHRolIlwh7zD7kBgkyLe7ByLvGFKa2Vw4PuWjqYwrRbFjb2+EKAwPu6
+VTWz/QQTU8oJewGFipw94Bi61zuaPvF1qZCHgYhVojRy6KcqncX2Hx9hjfVxspBZ
+DrVH6uofCmd99GmVu+qizybWQTrPaubfc/a2jJIbXc2bRQjYj/qmjE3hTlmO3k7V
+EP6i8CLhEl+dX75aZw9StkqjdpIApYwX6XNDqVuGzfeTXXclk4N4aDPwPFM/Yo/e
+KnvlNlKbljWdMYkfx8r37aOHpchH34cv0Jb5Im+1H07ywnshXNfUhRazOpubJRHn
+bjDuBwWS1/Vwp5AJ+QHsPXhJdl3qHc1szJZVJb3VyAWvG/bWApKfFuZX18tiI4N0
+EA==
+-----END CERTIFICATE-----`;
+
+const OFFICIAL_TLS_CRYPT = `-----BEGIN OpenVPN Static key V1-----
+6acef03f62675b4b1bbd03e53b187727
+423cea742242106cb2916a8a4c829756
+3d22c7e5cef430b1103c6f66eb1fc5b3
+75a672f158e2e2e936c3faa48b035a6d
+e17beaac23b5f03b10b868d53d03521d
+8ba115059da777a60cbfd7b2c9c57472
+78a15b8f6e68a3ef7fd583ec9f398c8b
+d4735dab40cbd1e3c62a822e97489186
+c30a0b48c7c38ea32ceb056d3fa5a710
+e10ccc7a0ddb363b08c3d2777a3395e1
+0c0b6080f56309192ab5aacd4b45f55d
+a61fc77af39bd81a19218a79762c3386
+2df55785075f37d8c71dc8a42097ee43
+344739a0dd48d03025b0450cf1fb5e8c
+aeb893d9a96d1f15519bb3c4dcb40ee3
+16672ea16c012664f8a9f11255518deb
+-----END OpenVPN Static key V1-----`;
+
 let currentLang = "fa";
 let currentProtocol = "wireguard";
+let activePrefix = "Sepansar";
 let serverDataset = [];
 
+const themeCheckbox = document.getElementById("theme-ios-checkbox");
 const btnFa = document.getElementById("btn-fa");
 const btnEn = document.getElementById("btn-en");
-const themeToggle = document.getElementById("theme-toggle");
-const themeStatusText = document.getElementById("theme-status-text");
-const txtThemeLabel = document.getElementById("txt-theme-label");
-const txtBrandTitle = document.getElementById("txt-brand-title");
-const tagCloud = document.getElementById("tag-cloud");
 const customPrefix = document.getElementById("custom-prefix");
+const btnApplyPrefix = document.getElementById("btn-apply-prefix");
+const txtApply = document.getElementById("txt-apply");
 const searchBox = document.getElementById("search-box");
 const statusCounter = document.getElementById("status-counter");
 const tableWrapper = document.querySelector(".table-wrapper");
+const toast = document.getElementById("toast");
 
+const txtBrandTitle = document.getElementById("txt-brand-title");
+const tagCloud = document.getElementById("tag-cloud");
+const txtThemeLabel = document.getElementById("txt-theme-label");
 const txtLangLabel = document.getElementById("txt-lang-label");
 const lblCustomPrefix = document.getElementById("lbl-custom-prefix");
 const lblProtocol = document.getElementById("lbl-protocol");
@@ -72,23 +130,22 @@ const txtMainSubtitle = document.getElementById("txt-main-subtitle");
 const txtFooterOwn = document.getElementById("txt-footer-own");
 const txtFooterDisclaimer = document.getElementById("txt-footer-disclaimer");
 
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 2500);
+}
+
 function initTheme() {
-  const savedTheme = localStorage.getItem("sepansar_theme") || "dark";
-  document.documentElement.setAttribute("data-theme", savedTheme);
-  updateThemeText();
+  const saved = localStorage.getItem("sepansar_theme") || "dark";
+  document.documentElement.setAttribute("data-theme", saved);
+  themeCheckbox.checked = (saved === "light");
 }
 
-function updateThemeText() {
-  const isLight = document.documentElement.getAttribute("data-theme") === "light";
-  themeStatusText.textContent = isLight ? I18N[currentLang].themeLight : I18N[currentLang].themeDark;
-}
-
-themeToggle.addEventListener("click", () => {
-  const current = document.documentElement.getAttribute("data-theme");
-  const next = current === "light" ? "dark" : "light";
-  document.documentElement.setAttribute("data-theme", next);
-  localStorage.setItem("sepansar_theme", next);
-  updateThemeText();
+themeCheckbox.addEventListener("change", () => {
+  const targetTheme = themeCheckbox.checked ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", targetTheme);
+  localStorage.setItem("sepansar_theme", targetTheme);
 });
 
 function applyLanguage(lang) {
@@ -112,21 +169,29 @@ function applyLanguage(lang) {
   txtMainTitle.textContent = t.mainTitle;
   txtMainSubtitle.textContent = t.mainSub;
   searchBox.placeholder = t.searchPlaceholder;
+  txtApply.textContent = t.applyBtn;
   txtFooterOwn.innerHTML = t.footerOwn;
   txtFooterDisclaimer.textContent = t.footerDisclaimer;
 
-  updateThemeText();
   renderServerList();
 }
 
 btnFa.addEventListener("click", () => applyLanguage("fa"));
 btnEn.addEventListener("click", () => applyLanguage("en"));
 
+btnApplyPrefix.addEventListener("click", () => {
+  activePrefix = customPrefix.value.trim() || "Sepansar";
+  renderServerList();
+  showToast(I18N[currentLang].toastPrefix);
+});
+
 document.querySelectorAll(".proto-card").forEach((card) => {
   card.addEventListener("click", () => {
     document.querySelectorAll(".proto-card").forEach((c) => c.classList.remove("active"));
     card.classList.add("active");
     currentProtocol = card.dataset.proto;
+    renderServerList();
+    showToast(`${I18N[currentLang].toastProto}: ${card.querySelector(".proto-title").textContent}`);
   });
 });
 
@@ -189,19 +254,23 @@ function renderServerList() {
       const row = document.createElement("div");
       row.className = "server-row";
 
-      const prefix = customPrefix.value.trim() || "ProtonHub";
-      const load = srv.Load !== undefined ? Math.round(srv.Load) : 75;
+      const ext = currentProtocol === "wireguard" ? ".conf" : ".ovpn";
+      const displayName = `${activePrefix}-${srv.Name}${ext}`;
+      const load = srv.Load !== undefined ? Math.round(srv.Load) : 80;
       const color = load > 85 ? "var(--danger)" : "var(--success)";
 
       row.innerHTML = `
-        <span class="server-name">${prefix}-${srv.Name || "Server"}</span>
+        <span class="server-name">${displayName}</span>
         <div class="server-meta">
           <div class="status-indicator" style="color: ${color};">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             <span>${load}%</span>
           </div>
           <span class="ipv6-badge">IPv6</span>
-          <button class="dl-btn">${t.dlBtn}</button>
+          <button class="dl-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>${t.dlBtn}</span>
+          </button>
         </div>
       `;
 
@@ -216,50 +285,74 @@ function renderServerList() {
 }
 
 function exportConfig(srv) {
-  const prefix = customPrefix.value.trim() || "ProtonHub";
-  const finalFilename = `${prefix}-${srv.Name || "VPN"}`;
+  const finalFilename = `${activePrefix}-${srv.Name}`;
   const ip = srv.Servers && srv.Servers[0] ? srv.Servers[0].EntryIP : srv.Domain;
-  const cfg = window.SECRET_CONFIG || { user: "", pass: "", wgPrivate: "cGFzc3dvcmRfZXhhbXBsZV9wcml2YXRlX2tleV8xMjM0NTY=" };
+  const cfg = window.SECRET_CONFIG || { user: "username", pass: "password", wgPrivate: "UKZg5sKBtmgXRYbp8lugpdRnBwYzKfuWqsjeH/aKrU0=" };
 
   if (currentProtocol === "wireguard") {
     const pubKey = srv.Servers && srv.Servers[0] ? srv.Servers[0].X25519PublicKey || "" : "";
     const payload = `[Interface]
+# Bouncing = 1
+# NAT-PMP (Port Forwarding) = off
+# VPN Accelerator = on
 PrivateKey = ${cfg.wgPrivate}
-Address = 10.2.0.2/32
-DNS = 10.2.0.1
+Address = 10.2.0.2/32, 2a07:b944::2:2/128
+DNS = 10.2.0.1, 2a07:b944::2:1
 
 [Peer]
+# ${srv.Name}
 PublicKey = ${pubKey}
+AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = ${ip}:51820
-AllowedIPs = 0.0.0.0/0
+PersistentKeepalive = 25
 `;
     executeBlobDownload(`${finalFilename}.conf`, payload);
   } else {
     const isTcp = currentProtocol === "openvpn-tcp";
     const proto = isTcp ? "tcp" : "udp";
-    const port = isTcp ? "443" : "1194";
+    const ports = isTcp ? [443, 8443, 5060] : [80, 5060, 1194, 51820, 4569];
+    const remoteDirectives = ports.map((p) => `remote ${ip} ${p}`).join("\n");
 
     const authSection = (cfg.user && cfg.pass)
       ? `<auth-user-pass>\n${cfg.user}\n${cfg.pass}\n</auth-user-pass>`
       : `auth-user-pass`;
 
-    const payload = `client
+    const payload = `# ==============================================================================
+# Copyright (c) Proton AG (Switzerland)
+# Generated via Proton Hub (sepansar)
+# Server: ${srv.Name}
+# ==============================================================================
+
+client
 dev tun
 proto ${proto}
-remote ${ip} ${port}
+
+${remoteDirectives}
+
+remote-random
 resolv-retry infinite
 nobind
+
+cipher AES-256-GCM
+
+setenv CLIENT_CERT 0
+tun-mtu 1500
+mssfix 0
 persist-key
 persist-tun
-cipher AES-256-GCM
-auth SHA512
-verb 3
+
+reneg-sec 0
+
+remote-cert-tls server
 ${authSection}
+
 <ca>
------BEGIN CERTIFICATE-----
-MIIB/DCCAYWgAwIBAgIUQ1aG3K7...
------END CERTIFICATE-----
+${OFFICIAL_CA}
 </ca>
+
+<tls-crypt>
+${OFFICIAL_TLS_CRYPT}
+</tls-crypt>
 `;
     executeBlobDownload(`${finalFilename}.ovpn`, payload);
   }
