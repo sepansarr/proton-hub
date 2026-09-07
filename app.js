@@ -11,7 +11,7 @@ const I18N = {
     protoTcp: "اوپن‌وی‌پی‌ان (TCP)",
     mainTitle: "سرورهای رسمی پروتون",
     mainSub: "فهرست کانفیگ‌های فعال با محاسبه بار زنده شبکه",
-    statusLoading: "در حال بارگیری داده‌ها...",
+    statusLoading: "در حال دریافت داده‌ها...",
     statusReady: "سرور فعال",
     fullServers: "سرور تکمیل ظرفیت (100%)",
     searchPlaceholder: "جستجوی کشور یا نام سرور...",
@@ -55,7 +55,13 @@ const COUNTRY_NAMES = {
   US: "United States", NL: "Netherlands", JP: "Japan", CA: "Canada", DE: "Germany",
   CH: "Switzerland", GB: "United Kingdom", FR: "France", SE: "Sweden", IS: "Iceland",
   AU: "Australia", BR: "Brazil", SG: "Singapore", MX: "Mexico", NO: "Norway",
-  DK: "Denmark", IT: "Italy", ES: "Spain", PL: "Poland", AT: "Austria"
+  DK: "Denmark", IT: "Italy", ES: "Spain", PL: "Poland", AT: "Austria",
+  RO: "Romania", BE: "Belgium", BG: "Bulgaria", HR: "Croatia", CY: "Cyprus",
+  CZ: "Czech Republic", EE: "Estonia", FI: "Finland", GR: "Greece", HK: "Hong Kong",
+  HU: "Hungary", IN: "India", IE: "Ireland", IL: "Israel", LV: "Latvia",
+  LT: "Lithuania", LU: "Luxembourg", MD: "Moldova", NZ: "New Zealand", PT: "Portugal",
+  RS: "Serbia", SK: "Slovakia", SI: "Slovenia", ZA: "South Africa", KR: "South Korea",
+  TW: "Taiwan", TR: "Turkey", UA: "Ukraine", AE: "United Arab Emirates"
 };
 
 const OFFICIAL_CA = `-----BEGIN CERTIFICATE-----
@@ -273,7 +279,8 @@ function renderServerList() {
     const list = groups[countryCode];
     const groupDiv = document.createElement("div");
     
-    const isOpen = openGroups[countryCode] !== undefined ? openGroups[countryCode] : true;
+    // وضعیت پیش‌فرض: بسته بودن کشورها (false)
+    const isOpen = openGroups[countryCode] !== undefined ? openGroups[countryCode] : false;
     groupDiv.className = `country-group ${isOpen ? "open" : ""}`;
 
     const countryName = COUNTRY_NAMES[countryCode] || countryCode;
