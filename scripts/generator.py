@@ -4,8 +4,8 @@ import requests
 
 PROTON_COOKIE = os.getenv("PROTON_COOKIE", "")
 PROTON_UID = os.getenv("PROTON_UID", "")
-PROTON_USER = os.getenv("PROTON_USER", "")
-PROTON_PASS = os.getenv("PROTON_PASS", "")
+DEFAULT_USER = os.getenv("PROTON_USER", "")
+DEFAULT_PASS = os.getenv("PROTON_PASS", "")
 
 HEADERS = {
     "accept": "application/vnd.protonmail.v1+json",
@@ -26,14 +26,38 @@ def is_truly_free(s):
 
 def extract_real_load(s):
     if "Load" in s and s["Load"] is not None:
-        return int(round(float(s["Load"])))
+        try:
+            return int(round(float(s["Load"])))
+        except Exception:
+            pass
     if "Score" in s and s["Score"] is not None:
-        return int(round(float(s["Score"])))
+        try:
+            val = float(s["Score"])
+            return int(round(val if val <= 100 else val / 10))
+        except Exception:
+            pass
     if s.get("Servers") and isinstance(s["Servers"], list) and len(s["Servers"]) > 0:
         sub = s["Servers"][0]
         if "Load" in sub and sub["Load"] is not None:
-            return int(round(float(sub["Load"])))
-    return 75
+            try:
+                return int(round(float(sub["Load"])))
+            except Exception:
+                pass
+    return 80
+
+def fetch_vpn_credentials():
+    url = "https://account-api.protonvpn.com/api/core/v4/vpn"
+    try:
+        res = requests.get(url, headers=HEADERS, timeout=15)
+        if res.status_code == 200:
+            data = res.json().get("VPN", {})
+            user = data.get("Name")
+            pwd = data.get("Password")
+            if user and pwd:
+                return user, pwd
+    except Exception:
+        pass
+    return DEFAULT_USER, DEFAULT_PASS
 
 def fetch_free_servers():
     endpoints = [
@@ -61,11 +85,12 @@ def fetch_free_servers():
 
 def main():
     servers = fetch_free_servers()
+    user, pwd = fetch_vpn_credentials()
     
     js_content = f"""window.STATIC_SERVERS = {json.dumps(servers, ensure_ascii=False)};
 window.SECRET_CONFIG = {{
-  user: "{PROTON_USER}",
-  pass: "{PROTON_PASS}",
+  user: "{user}",
+  pass: "{pwd}",
   wgPrivate: "UKZg5sKBtmgXRYbp8lugpdRnBwYzKfuWqsjeH/aKrU0="
 }};
 """
