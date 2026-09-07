@@ -251,7 +251,7 @@ function renderServerList() {
   });
 
   const fullCount = filtered.filter(s => {
-    const l = s.ActualLoad !== undefined ? s.ActualLoad : (s.Load || 0);
+    const l = s.ActualLoad !== undefined ? s.ActualLoad : (s.Load !== undefined ? Math.round(s.Load) : 0);
     return l >= 100;
   }).length;
 
@@ -310,7 +310,7 @@ function renderServerList() {
       const ext = currentProtocol === "wireguard" ? ".conf" : ".ovpn";
       const displayName = `${activePrefix}-${srv.Name}${ext}`;
       
-      const load = srv.ActualLoad !== undefined ? srv.ActualLoad : (srv.Load !== undefined ? Math.round(srv.Load) : 80);
+      const load = srv.ActualLoad !== undefined ? srv.ActualLoad : (srv.Load !== undefined ? Math.round(srv.Load) : 84);
       const color = load >= 100 ? "var(--danger)" : load > 85 ? "var(--warning)" : "var(--success)";
 
       const hasIpv6 = Boolean(srv.Features && (srv.Features & 16 || srv.Features & 32));
