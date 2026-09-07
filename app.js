@@ -10,9 +10,9 @@ const I18N = {
     protoUdp: "اوپن‌وی‌پی‌ان (UDP)",
     protoTcp: "اوپن‌وی‌پی‌ان (TCP)",
     mainTitle: "سرورهای رسمی پروتون",
-    mainSub: "فهرست کانفیگ‌های فعال با محاسبه بار زنده شبکه",
-    statusLoading: "در حال دریافت داده‌ها...",
-    statusReady: "سرور فعال",
+    mainSub: "فهرست کانفیگ‌های فعال رایگان با محاسبه بار زنده شبکه",
+    statusLoading: "در حال بارگیری داده‌ها...",
+    statusReady: "سرور فعال رایگان",
     fullServers: "سرور تکمیل ظرفیت (100%)",
     searchPlaceholder: "جستجوی کشور یا نام سرور...",
     dlBtn: "دریافت فایل",
@@ -35,9 +35,9 @@ const I18N = {
     protoUdp: "OpenVPN (UDP)",
     protoTcp: "OpenVPN (TCP)",
     mainTitle: "Proton Official Servers",
-    mainSub: "Active server inventory with real-time network load",
+    mainSub: "Active free server inventory with real-time network load",
     statusLoading: "Loading server inventory...",
-    statusReady: "Active Servers",
+    statusReady: "Active Free Servers",
     fullServers: "Full Capacity Servers (100%)",
     searchPlaceholder: "Search country or server name...",
     dlBtn: "Download",
@@ -56,12 +56,7 @@ const COUNTRY_NAMES = {
   CH: "Switzerland", GB: "United Kingdom", FR: "France", SE: "Sweden", IS: "Iceland",
   AU: "Australia", BR: "Brazil", SG: "Singapore", MX: "Mexico", NO: "Norway",
   DK: "Denmark", IT: "Italy", ES: "Spain", PL: "Poland", AT: "Austria",
-  RO: "Romania", BE: "Belgium", BG: "Bulgaria", HR: "Croatia", CY: "Cyprus",
-  CZ: "Czech Republic", EE: "Estonia", FI: "Finland", GR: "Greece", HK: "Hong Kong",
-  HU: "Hungary", IN: "India", IE: "Ireland", IL: "Israel", LV: "Latvia",
-  LT: "Lithuania", LU: "Luxembourg", MD: "Moldova", NZ: "New Zealand", PT: "Portugal",
-  RS: "Serbia", SK: "Slovakia", SI: "Slovenia", ZA: "South Africa", KR: "South Korea",
-  TW: "Taiwan", TR: "Turkey", UA: "Ukraine", AE: "United Arab Emirates"
+  RO: "Romania", BE: "Belgium", BG: "Bulgaria", HR: "Croatia", CY: "Cyprus"
 };
 
 const OFFICIAL_CA = `-----BEGIN CERTIFICATE-----
@@ -255,7 +250,10 @@ function renderServerList() {
     return name.includes(query) || country.includes(query) || cName.includes(query);
   });
 
-  const fullCount = filtered.filter(s => (s.Load !== undefined ? Math.round(s.Load) : 0) >= 100).length;
+  const fullCount = filtered.filter(s => {
+    const l = s.ActualLoad !== undefined ? s.ActualLoad : (s.Load || 0);
+    return l >= 100;
+  }).length;
 
   statusCounter.textContent = `${filtered.length} ${t.statusReady}`;
   
@@ -279,7 +277,6 @@ function renderServerList() {
     const list = groups[countryCode];
     const groupDiv = document.createElement("div");
     
-    // وضعیت پیش‌فرض: بسته بودن کشورها (false)
     const isOpen = openGroups[countryCode] !== undefined ? openGroups[countryCode] : false;
     groupDiv.className = `country-group ${isOpen ? "open" : ""}`;
 
@@ -312,7 +309,8 @@ function renderServerList() {
 
       const ext = currentProtocol === "wireguard" ? ".conf" : ".ovpn";
       const displayName = `${activePrefix}-${srv.Name}${ext}`;
-      const load = srv.Load !== undefined ? Math.round(srv.Load) : 80;
+      
+      const load = srv.ActualLoad !== undefined ? srv.ActualLoad : (srv.Load !== undefined ? Math.round(srv.Load) : 82);
       const color = load >= 100 ? "var(--danger)" : load > 85 ? "var(--warning)" : "var(--success)";
 
       const hasIpv6 = Boolean(srv.Features && (srv.Features & 16 || srv.Features & 32));
