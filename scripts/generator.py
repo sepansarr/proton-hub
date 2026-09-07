@@ -30,7 +30,10 @@ def fetch_servers():
             servers = res.json().get("LogicalServers", [])
             active = [s for s in servers if s.get("Status") == 1]
             free = [s for s in active if is_free_server(s)]
-            return free if free else active
+            if free:
+                return free
+            if active:
+                return active
     except Exception:
         pass
 
@@ -41,7 +44,10 @@ def fetch_servers():
             servers_fb = res_fb.json().get("LogicalServers", [])
             active_fb = [s for s in servers_fb if s.get("Status") == 1]
             free_fb = [s for s in active_fb if is_free_server(s)]
-            return free_fb if free_fb else active_fb
+            if free_fb:
+                return free_fb
+            if active_fb:
+                return active_fb
     except Exception:
         pass
 
