@@ -25,7 +25,7 @@ def fetch_all_servers():
 
     for url in endpoints:
         try:
-            res = requests.get(url, headers=HEADERS, timeout=20)
+            res = requests.get(url, headers=HEADERS, timeout=25)
             if res.status_code == 200:
                 raw = res.json()
                 items = raw.get("LogicalServers", []) if isinstance(raw, dict) else raw
