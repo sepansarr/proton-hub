@@ -56,6 +56,7 @@ const I18N = {
 let currentLang = "fa";
 let currentProtocol = "wireguard";
 let serverDataset = [];
+window.SECRET_CONFIG = { user: "", pass: "", wgPrivate: "cGFzc3dvcmRfZXhhbXBsZV9wcml2YXRlX2tleV8xMjM0NTY=" };
 
 const btnFa = document.getElementById("btn-fa");
 const btnEn = document.getElementById("btn-en");
@@ -150,30 +151,44 @@ searchBox.addEventListener("input", renderServerList);
 
 async function loadServers() {
   try {
-    const res = await fetch("./data/servers.json?t=" + Date.now());
-    if (res.ok) {
-      const data = await res.json();
-      serverDataset = data.servers || [];
-      window.SECRET_CONFIG = {
-        user: data.user,
-        pass: data.pass,
-        wgPrivate: data.wg_private
-      };
-      renderServerList();
-      return;
+    const localRes = await fetch("data/servers.json?t=" + new Date().getTime());
+    if (localRes.ok) {
+      const data = await localRes.json();
+      if (data.servers && data.servers.length > 0) {
+        serverDataset = data.servers;
+        window.SECRET_CONFIG = {
+          user: data.user || "",
+          pass: data.pass || "",
+          wgPrivate: data.wg_private || "cGFzc3dvcmRfZXhhbXBsZV9wcml2YXRlX2tleV8xMjM0NTY="
+        };
+        renderServerList();
+        return;
+      }
     }
   } catch (e) {}
 
-  const targetUrl = "https://api.protonvpn.ch/vpn/logicals";
-  const proxy = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-  try {
-    const res = await fetch(proxy, { headers: { "x-pm-appversion": "Other" } });
-    const data = await res.json();
-    serverDataset = data.LogicalServers.filter((s) => s.Status === 1 && s.Tier === 0);
-    renderServerList();
-  } catch (err) {
-    statusCounter.textContent = I18N[currentLang].errConn;
+  const target = "https://api.protonvpn.ch/vpn/logicals";
+  const proxyEndpoints = [
+    `https://corsproxy.io/?${encodeURIComponent(target)}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`
+  ];
+
+  for (const pUrl of proxyEndpoints) {
+    try {
+      const res = await fetch(pUrl, { headers: { "x-pm-appversion": "Other" } });
+      if (res.ok) {
+        const raw = await res.json();
+        const list = raw.LogicalServers || raw;
+        if (Array.isArray(list)) {
+          serverDataset = list.filter((s) => s.Status === 1 && s.Tier === 0);
+          renderServerList();
+          return;
+        }
+      }
+    } catch (err) {}
   }
+
+  statusCounter.textContent = I18N[currentLang].errConn;
 }
 
 function renderServerList() {
@@ -181,11 +196,10 @@ function renderServerList() {
   const query = searchBox.value.trim().toLowerCase();
 
   const filtered = serverDataset.filter((s) => {
-    return (
-      s.Name.toLowerCase().includes(query) ||
-      s.ExitCountry.toLowerCase().includes(query) ||
-      (s.City && s.City.toLowerCase().includes(query))
-    );
+    const name = (s.Name || "").toLowerCase();
+    const country = (s.ExitCountry || "").toLowerCase();
+    const city = (s.City || "").toLowerCase();
+    return name.includes(query) || country.includes(query) || city.includes(query);
   });
 
   statusCounter.textContent = `${filtered.length} ${t.statusReady}`;
@@ -195,20 +209,21 @@ function renderServerList() {
     const tr = document.createElement("tr");
 
     const tdCountry = document.createElement("td");
-    tdCountry.textContent = `${srv.ExitCountry} - ${srv.City || "Direct"}`;
+    tdCountry.textContent = `${srv.ExitCountry || "Proton"} - ${srv.City || "Direct"}`;
 
     const tdName = document.createElement("td");
     const prefix = customPrefix.value.trim() || "ProtonHub";
-    tdName.textContent = `${prefix}-${srv.Name}`;
+    tdName.textContent = `${prefix}-${srv.Name || "Server"}`;
 
+    const loadVal = srv.Load !== undefined ? srv.Load : 50;
     const tdLoad = document.createElement("td");
-    const color = srv.Load < 50 ? "var(--success)" : srv.Load < 80 ? "var(--warning)" : "var(--danger)";
+    const color = loadVal < 50 ? "var(--success)" : loadVal < 80 ? "var(--warning)" : "var(--danger)";
     tdLoad.innerHTML = `
       <div class="load-pill">
         <div class="pill-track">
-          <div class="pill-fill" style="width: ${srv.Load}%; background: ${color};"></div>
+          <div class="pill-fill" style="width: ${loadVal}%; background: ${color};"></div>
         </div>
-        <span>${srv.Load}%</span>
+        <span>${loadVal}%</span>
       </div>
     `;
 
@@ -229,9 +244,9 @@ function renderServerList() {
 
 function exportConfig(srv) {
   const prefix = customPrefix.value.trim() || "ProtonHub";
-  const finalFilename = `${prefix}-${srv.Name}`;
+  const finalFilename = `${prefix}-${srv.Name || "VPN"}`;
   const ip = srv.Servers && srv.Servers[0] ? srv.Servers[0].EntryIP : srv.Domain;
-  const cfg = window.SECRET_CONFIG || { user: "", pass: "", wgPrivate: "{{CLIENT_WG_PRIVATE_KEY}}" };
+  const cfg = window.SECRET_CONFIG;
 
   if (currentProtocol === "wireguard") {
     const pubKey = srv.Servers && srv.Servers[0] ? srv.Servers[0].X25519PublicKey || "" : "";
@@ -251,7 +266,7 @@ AllowedIPs = 0.0.0.0/0
     const proto = isTcp ? "tcp" : "udp";
     const port = isTcp ? "443" : "1194";
 
-    const authSection = cfg.user && cfg.pass 
+    const authSection = (cfg.user && cfg.pass)
       ? `<auth-user-pass>\n${cfg.user}\n${cfg.pass}\n</auth-user-pass>`
       : `auth-user-pass`;
 
