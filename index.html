@@ -1,46 +1,138 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl" data-theme="dark">
+<html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Proton Hub | پروتون هاب</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>پروتون هاب | Proton Hub</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="ambient-glow glow-1"></div>
-    <div class="ambient-glow glow-2"></div>
-    <div class="layout">
-        <aside class="sidebar">
-            <img src="sepansar.jpg" alt="Sepansar Logo" class="logo">
-            <img src="iran.png" alt="Iran Flag" class="flag">
-            <div class="controls">
-                <button id="theme-toggle" class="ios-toggle"></button>
-                <button id="lang-toggle">EN</button>
+  <div class="ambient-mesh mesh-primary"></div>
+  <div class="ambient-mesh mesh-secondary"></div>
+
+  <div class="app-container">
+    <aside class="control-panel">
+      <div class="brand-badge-wrapper">
+        <div class="brand-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="brand-titles">
+          <span class="brand-name" id="txt-brand-title">پروتون هاب</span>
+          <span class="brand-version" id="tag-cloud">ژنراتور رسمی سرورها</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="switch-row">
+          <span id="txt-theme-label" class="group-title">حالت نمایش</span>
+          <div class="ios-toggle">
+            <input type="checkbox" id="theme-ios-checkbox" class="toggle-native">
+            <label for="theme-ios-checkbox" class="toggle-track">
+              <span class="toggle-knob">
+                <svg class="icon-sun" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2"/></svg>
+                <svg class="icon-moon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <span id="txt-lang-label" class="group-title">زبان سامانه</span>
+        <div class="lang-selector-grid">
+          <button type="button" id="btn-fa" class="btn-lang active">
+            <svg viewBox="0 0 36 24" width="18" height="12" class="flag-icon-mini">
+              <rect width="36" height="8" fill="#239f40"/>
+              <rect y="8" width="36" height="8" fill="#ffffff"/>
+              <rect y="16" width="36" height="8" fill="#da0000"/>
+              <circle cx="18" cy="12" r="3.2" fill="#ffd700"/>
+            </svg>
+            پارسی
+          </button>
+          <button type="button" id="btn-en" class="btn-lang">English</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <span id="lbl-custom-prefix" class="group-title">پیشوند فایل کانفیگ</span>
+        <div class="input-with-action">
+          <input type="text" id="custom-prefix" value="Sepansar" class="text-input" spellcheck="false">
+          <button type="button" id="btn-apply-prefix" class="btn-action">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span id="txt-apply">اعمال</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <span id="lbl-protocol" class="group-title">نوع پروتکل ارتباطی</span>
+        <div class="protocol-deck">
+          <button type="button" class="protocol-tile active" data-proto="wireguard">
+            <div class="tile-meta">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span id="txt-proto-wg">WireGuard</span>
             </div>
-            <div class="input-group">
-                <label id="lbl-prefix">پیشوند:</label>
-                <input type="text" id="prefix-input">
+            <span class="file-ext">.conf</span>
+          </button>
+          <button type="button" class="protocol-tile" data-proto="openvpn-udp">
+            <div class="tile-meta">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
+              <span id="txt-proto-udp">OpenVPN (UDP)</span>
             </div>
-            <div class="protocols">
-                <div class="card" id="proto-wg">وایرگارد</div>
-                <div class="card" id="proto-udp">اوپن وی‌پی‌ان UDP</div>
-                <div class="card" id="proto-tcp">اوپن وی‌پی‌ان TCP</div>
+            <span class="file-ext">.ovpn</span>
+          </button>
+          <button type="button" class="protocol-tile" data-proto="openvpn-tcp">
+            <div class="tile-meta">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/></svg>
+              <span id="txt-proto-tcp">OpenVPN (TCP)</span>
             </div>
-        </aside>
-        <main class="main-content">
-            <header class="live-metrics">
-                <h1 id="lbl-title">پروتون هاب</h1>
-                <span id="sync-status">در حال همگام‌سازی...</span>
-            </header>
-            <div class="search-bar">
-                <input type="text" id="search-input" placeholder="جستجوی سرورها...">
-            </div>
-            <div id="server-list" class="accordion">
-                <div id="loading-indicator">در حال بارگذاری داده‌ها...</div>
-            </div>
-        </main>
-    </div>
-    <script src="servers.js"></script>
-    <script src="app.js"></script>
+            <span class="file-ext">.ovpn</span>
+          </button>
+        </div>
+      </div>
+
+      <footer class="panel-footer">
+        <p id="txt-footer-own">توسعه توسط <a href="https://github.com/sepansarr" target="_blank" rel="noopener noreferrer">سپنسار</a></p>
+        <p class="muted-note" id="txt-footer-disclaimer">این پروژه مستقل بوده و هیچ وابستگی رسمی به Proton AG ندارد.</p>
+      </footer>
+    </aside>
+
+    <main class="viewport">
+      <header class="view-header">
+        <div class="header-content">
+          <h1 id="txt-main-title">سرورهای رسمی پروتون</h1>
+          <p id="txt-main-subtitle">فهرست کانفیگ‌های فعال با محاسبه بار زنده شبکه</p>
+        </div>
+        <div class="header-actions">
+          <div class="metric-pill">
+            <span class="pulse-indicator"></span>
+            <span id="status-counter">در حال بارگیری...</span>
+          </div>
+          <div id="full-counter-badge" class="metric-pill pill-alert" style="display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span id="full-counter-text">0 سرور پر</span>
+          </div>
+          <button type="button" id="btn-reload" class="btn-circular" title="بارگیری مجدد">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="search-block">
+        <div class="search-inner">
+          <svg class="search-lens" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="search-box" placeholder="جستجوی نام کشور یا کد سرور...">
+        </div>
+      </div>
+
+      <div class="server-deck-wrapper"></div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast-card"></div>
+
+  <script src="servers.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
