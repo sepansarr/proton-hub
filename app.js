@@ -73,6 +73,7 @@ function fetchLiveMetrics() {
         })
         .catch(() => {
             document.getElementById("sync-status").textContent = "Sync Failed";
+            renderServers();
         });
 }
 
