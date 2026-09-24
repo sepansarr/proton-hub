@@ -4,9 +4,9 @@
 
 **ژنراتور پیشرفته و خودکار کانفیگ‌های رسمی Proton VPN**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
-[![Update](https://img.shields.io/badge/Auto_Sync-Active-success.svg)]()
-[![Proton](https://img.shields.io/badge/ProtonVPN-Official_API-blue.svg)]()
+[![License: MIT](https://img.shields.io/github/license/sepansarr/proton-hub?color=purple&style=flat)](LICENSE)
+[![Scheduled Config Sync](https://github.com/sepansarr/proton-hub/actions/workflows/update.yml/badge.svg)](https://github.com/sepansarr/proton-hub/actions/workflows/update.yml)
+[![Proton API](https://img.shields.io/badge/ProtonVPN-Official_API-0088cc.svg?logo=proton&logoColor=white)](https://protonvpn.com)
 
 [English](#-english) • [پارسی](#-پارسی)
 
