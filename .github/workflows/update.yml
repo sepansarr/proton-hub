@@ -6,6 +6,9 @@ on:
     - cron: '0 0 1 * *'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,17 +24,25 @@ jobs:
       - name: Install Dependencies
         run: pip install requests
 
+      - name: Verify Script Version
+        run: |
+          ls -la
+          ls -la scripts
+          wc -l scripts/generator.py
+          grep -c "flush_report" scripts/generator.py
+
       - name: Run Generator
         env:
           PROTON_USER: ${{ secrets.PROTON_USER }}
           PROTON_PASS: ${{ secrets.PROTON_PASS }}
           PROTON_COOKIE: ${{ secrets.PROTON_COOKIE }}
           PROTON_UID: ${{ secrets.PROTON_UID }}
-        run: python scripts/generator.py
+          PROTON_WG_PRIVATE: ${{ secrets.PROTON_WG_PRIVATE }}
+        run: python -u scripts/generator.py
 
       - name: Commit and Push
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: sync live configs and vpn credentials [skip ci]" && git push)
+          git add servers.js
+          git diff --staged --quiet || (git commit -m "chore: sync live configs and vpn credentials [skip ci]" && git push)
