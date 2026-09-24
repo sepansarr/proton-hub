@@ -118,44 +118,8 @@ let activePrefix = "Sepansar";
 let serverDataset = [];
 let openGroups = {};
 
-const themeCheckbox = document.getElementById("theme-ios-checkbox");
-const btnFa = document.getElementById("btn-fa");
-const btnEn = document.getElementById("btn-en");
-const customPrefix = document.getElementById("custom-prefix");
-const btnApplyPrefix = document.getElementById("btn-apply-prefix");
-const txtApply = document.getElementById("txt-apply");
-const searchBox = document.getElementById("search-box");
-const statusCounter = document.getElementById("status-counter");
-const fullCounterBadge = document.getElementById("full-counter-badge");
-const fullCounterText = document.getElementById("full-counter-text");
-const btnReload = document.getElementById("btn-reload");
-const toast = document.getElementById("toast");
-
-const txtBrandTitle = document.getElementById("txt-brand-title");
-const tagCloud = document.getElementById("tag-cloud");
-const txtThemeLabel = document.getElementById("txt-theme-label");
-const txtLangLabel = document.getElementById("txt-lang-label");
-const lblCustomPrefix = document.getElementById("lbl-custom-prefix");
-const lblProtocol = document.getElementById("lbl-protocol");
-const txtProtoWg = document.getElementById("txt-proto-wg");
-const txtProtoUdp = document.getElementById("txt-proto-udp");
-const txtProtoTcp = document.getElementById("txt-proto-tcp");
-const txtMainTitle = document.getElementById("txt-main-title");
-const txtMainSubtitle = document.getElementById("txt-main-subtitle");
-const txtFooterOwn = document.getElementById("txt-footer-own");
-const txtFooterDisclaimer = document.getElementById("txt-footer-disclaimer");
-
-function getTableWrapper() {
-  return document.querySelector(".table-wrapper") || 
-         document.getElementById("servers-container") || 
-         document.getElementById("servers-list") || 
-         document.querySelector(".servers-container") || 
-         document.querySelector(".servers-list") || 
-         document.querySelector("main") || 
-         document.body;
-}
-
 function showToast(msg) {
+  const toast = document.getElementById("toast");
   if (!toast) return;
   toast.textContent = msg;
   toast.classList.add("show");
@@ -165,17 +129,10 @@ function showToast(msg) {
 function initTheme() {
   const saved = localStorage.getItem("sepansar_theme") || "dark";
   document.documentElement.setAttribute("data-theme", saved);
+  const themeCheckbox = document.getElementById("theme-ios-checkbox");
   if (themeCheckbox) {
     themeCheckbox.checked = (saved === "light");
   }
-}
-
-if (themeCheckbox) {
-  themeCheckbox.addEventListener("change", () => {
-    const targetTheme = themeCheckbox.checked ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", targetTheme);
-    localStorage.setItem("sepansar_theme", targetTheme);
-  });
 }
 
 function applyLanguage(lang) {
@@ -183,67 +140,44 @@ function applyLanguage(lang) {
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
 
+  const btnFa = document.getElementById("btn-fa");
+  const btnEn = document.getElementById("btn-en");
   if (btnFa) btnFa.classList.toggle("active", lang === "fa");
   if (btnEn) btnEn.classList.toggle("active", lang === "en");
 
   const t = I18N[lang];
+  const txtBrandTitle = document.getElementById("txt-brand-title");
   if (txtBrandTitle) txtBrandTitle.textContent = t.brandTitle;
+  const tagCloud = document.getElementById("tag-cloud");
   if (tagCloud) tagCloud.textContent = t.tagCloud;
+  const txtThemeLabel = document.getElementById("txt-theme-label");
   if (txtThemeLabel) txtThemeLabel.textContent = t.themeLabel;
+  const txtLangLabel = document.getElementById("txt-lang-label");
   if (txtLangLabel) txtLangLabel.textContent = t.langLabel;
+  const lblCustomPrefix = document.getElementById("lbl-custom-prefix");
   if (lblCustomPrefix) lblCustomPrefix.textContent = t.prefixLabel;
+  const lblProtocol = document.getElementById("lbl-protocol");
   if (lblProtocol) lblProtocol.textContent = t.protoLabel;
+  const txtProtoWg = document.getElementById("txt-proto-wg");
   if (txtProtoWg) txtProtoWg.textContent = t.protoWg;
+  const txtProtoUdp = document.getElementById("txt-proto-udp");
   if (txtProtoUdp) txtProtoUdp.textContent = t.protoUdp;
+  const txtProtoTcp = document.getElementById("txt-proto-tcp");
   if (txtProtoTcp) txtProtoTcp.textContent = t.protoTcp;
+  const txtMainTitle = document.getElementById("txt-main-title");
   if (txtMainTitle) txtMainTitle.textContent = t.mainTitle;
+  const txtMainSubtitle = document.getElementById("txt-main-subtitle");
   if (txtMainSubtitle) txtMainSubtitle.textContent = t.mainSub;
+  const searchBox = document.getElementById("search-box");
   if (searchBox) searchBox.placeholder = t.searchPlaceholder;
+  const txtApply = document.getElementById("txt-apply");
   if (txtApply) txtApply.textContent = t.applyBtn;
+  const txtFooterOwn = document.getElementById("txt-footer-own");
   if (txtFooterOwn) txtFooterOwn.innerHTML = t.footerOwn;
+  const txtFooterDisclaimer = document.getElementById("txt-footer-disclaimer");
   if (txtFooterDisclaimer) txtFooterDisclaimer.textContent = t.footerDisclaimer;
 
   renderServerList();
-}
-
-if (btnFa) btnFa.addEventListener("click", () => applyLanguage("fa"));
-if (btnEn) btnEn.addEventListener("click", () => applyLanguage("en"));
-
-if (btnApplyPrefix) {
-  btnApplyPrefix.addEventListener("click", () => {
-    activePrefix = (customPrefix && customPrefix.value.trim()) || "Sepansar";
-    renderServerList();
-    showToast(I18N[currentLang].toastPrefix);
-  });
-}
-
-document.querySelectorAll(".proto-card").forEach((card) => {
-  card.addEventListener("click", () => {
-    document.querySelectorAll(".proto-card").forEach((c) => c.classList.remove("active"));
-    card.classList.add("active");
-    currentProtocol = card.dataset.proto;
-    renderServerList();
-    const titleEl = card.querySelector(".proto-title");
-    showToast(`${I18N[currentLang].toastProto}: ${titleEl ? titleEl.textContent : currentProtocol}`);
-  });
-});
-
-if (btnReload) {
-  btnReload.addEventListener("click", () => {
-    btnReload.classList.add("spinning");
-    const s = document.createElement("script");
-    s.src = "servers.js?t=" + Date.now();
-    s.onload = () => {
-      btnReload.classList.remove("spinning");
-      loadServers();
-      showToast(I18N[currentLang].toastReload);
-    };
-    document.body.appendChild(s);
-  });
-}
-
-if (searchBox) {
-  searchBox.addEventListener("input", renderServerList);
 }
 
 function loadServers() {
@@ -251,17 +185,19 @@ function loadServers() {
     serverDataset = window.STATIC_SERVERS;
     renderServerList();
   } else {
+    const statusCounter = document.getElementById("status-counter");
     if (statusCounter) statusCounter.textContent = I18N[currentLang].errConn;
   }
 }
 
 function getCountryFlag(code) {
   if (!code || code.length !== 2) return "https://flagcdn.com/w40/un.png";
-  return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
+  return "https://flagcdn.com/w40/" + code.toLowerCase() + ".png";
 }
 
 function renderServerList() {
   const t = I18N[currentLang];
+  const searchBox = document.getElementById("search-box");
   const query = searchBox ? searchBox.value.trim().toLowerCase() : "";
 
   const filtered = serverDataset.filter((s) => {
@@ -276,20 +212,23 @@ function renderServerList() {
     return l >= 100;
   }).length;
 
+  const statusCounter = document.getElementById("status-counter");
   if (statusCounter) {
-    statusCounter.textContent = `${filtered.length} ${t.statusReady}`;
+    statusCounter.textContent = filtered.length + " " + t.statusReady;
   }
   
+  const fullCounterBadge = document.getElementById("full-counter-badge");
+  const fullCounterText = document.getElementById("full-counter-text");
   if (fullCounterBadge && fullCounterText) {
     if (fullCount > 0) {
       fullCounterBadge.style.display = "flex";
-      fullCounterText.textContent = `${fullCount} ${t.fullServers}`;
+      fullCounterText.textContent = fullCount + " " + t.fullServers;
     } else {
       fullCounterBadge.style.display = "none";
     }
   }
 
-  const container = getTableWrapper();
+  const container = document.querySelector(".table-wrapper");
   if (!container) return;
   container.innerHTML = "";
 
@@ -305,7 +244,7 @@ function renderServerList() {
     const groupDiv = document.createElement("div");
     
     const isOpen = openGroups[countryCode] !== undefined ? openGroups[countryCode] : false;
-    groupDiv.className = `country-group ${isOpen ? "open" : ""}`;
+    groupDiv.className = "country-group" + (isOpen ? " open" : "");
 
     const countryName = COUNTRY_NAMES[countryCode] || countryCode;
 
@@ -335,7 +274,7 @@ function renderServerList() {
       row.className = "server-row";
 
       const ext = currentProtocol === "wireguard" ? ".conf" : ".ovpn";
-      const displayName = `${activePrefix}-${srv.Name}${ext}`;
+      const displayName = activePrefix + "-" + srv.Name + ext;
       
       const load = srv.ActualLoad !== undefined ? srv.ActualLoad : (srv.Load !== undefined ? Math.round(srv.Load) : 84);
       const color = load >= 100 ? "var(--danger)" : load > 85 ? "var(--warning)" : "var(--success)";
@@ -368,59 +307,41 @@ function renderServerList() {
 }
 
 function exportConfig(srv) {
-  const finalFilename = `${activePrefix}-${srv.Name}`;
+  const finalFilename = activePrefix + "-" + srv.Name;
   const ip = srv.Servers && srv.Servers[0] ? srv.Servers[0].EntryIP : srv.Domain;
   const cfg = window.SECRET_CONFIG || { user: "username", pass: "password", wgPrivate: "UKZg5sKBtmgXRYbp8lugpdRnBwYzKfuWqsjeH/aKrU0=" };
 
   if (currentProtocol === "wireguard") {
     const pubKey = srv.Servers && srv.Servers[0] ? srv.Servers[0].X25519PublicKey || "" : "";
     const payload = `[Interface]
-# Bouncing = 1
-# NAT-PMP (Port Forwarding) = off
-# VPN Accelerator = on
 PrivateKey = ${cfg.wgPrivate}
 Address = 10.2.0.2/32, 2a07:b944::2:2/128
 DNS = 10.2.0.1, 2a07:b944::2:1
 
 [Peer]
-# ${srv.Name}
 PublicKey = ${pubKey}
 AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = ${ip}:51820
 PersistentKeepalive = 25
 `;
-    executeBlobDownload(`${finalFilename}.conf`, payload);
+    executeBlobDownload(finalFilename + ".conf", payload);
   } else {
     const isTcp = currentProtocol === "openvpn-tcp";
     const proto = isTcp ? "tcp" : "udp";
     const ports = isTcp ? [443, 8443, 5060] : [5060, 51820, 4569, 80, 1194];
-    const remoteDirectives = ports.map((p) => `remote ${ip} ${p}`).join("\n");
+    const remoteDirectives = ports.map((p) => "remote " + ip + " " + p).join("\n");
 
     const exitSuffix = (srv.Servers && srv.Servers[0] && srv.Servers[0].Label !== undefined)
-      ? `+b:${srv.Servers[0].Label}`
-      : `+b:0`;
+      ? "+b:" + srv.Servers[0].Label
+      : "+b:0";
 
-    const userWithSuffix = cfg.user ? `${cfg.user}${exitSuffix}` : "";
+    const userWithSuffix = cfg.user ? cfg.user + exitSuffix : "";
 
     const authSection = (userWithSuffix && cfg.pass)
-      ? `<auth-user-pass>\n${userWithSuffix}\n${cfg.pass}\n</auth-user-pass>`
-      : `auth-user-pass`;
+      ? "<auth-user-pass>\n" + userWithSuffix + "\n" + cfg.pass + "\n</auth-user-pass>"
+      : "auth-user-pass";
 
-    const payload = `# ==============================================================================
-# Copyright (c) 2023 Proton AG (Switzerland)
-# Email: contact@protonvpn.com
-# Generated via Proton Hub (sepansar)
-# Server: ${srv.Name}
-# ==============================================================================
-
-# The server you are connecting to is using a circuit in order to separate entry IP from exit IP
-# The same entry IP allows to connect to multiple exit IPs in the same data center.
-
-# If you want to explicitly select the exit IP corresponding to server ${srv.Name} you need to
-# append a special suffix to your OpenVPN username.
-# Please use "${userWithSuffix}" in order to enforce exiting through ${srv.Name}.
-
-client
+    const payload = `client
 dev tun
 proto ${proto}
 
@@ -451,7 +372,7 @@ ${OFFICIAL_CA}
 ${OFFICIAL_TLS_CRYPT}
 </tls-crypt>
 `;
-    executeBlobDownload(`${finalFilename}.ovpn`, payload);
+    executeBlobDownload(finalFilename + ".ovpn", payload);
   }
 }
 
@@ -466,12 +387,72 @@ function executeBlobDownload(filename, body) {
   URL.revokeObjectURL(anchor.href);
 }
 
+function initEvents() {
+  const themeCheckbox = document.getElementById("theme-ios-checkbox");
+  if (themeCheckbox) {
+    themeCheckbox.addEventListener("change", () => {
+      const targetTheme = themeCheckbox.checked ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", targetTheme);
+      localStorage.setItem("sepansar_theme", targetTheme);
+    });
+  }
+
+  const btnFa = document.getElementById("btn-fa");
+  if (btnFa) btnFa.addEventListener("click", () => applyLanguage("fa"));
+
+  const btnEn = document.getElementById("btn-en");
+  if (btnEn) btnEn.addEventListener("click", () => applyLanguage("en"));
+
+  const btnApplyPrefix = document.getElementById("btn-apply-prefix");
+  if (btnApplyPrefix) {
+    btnApplyPrefix.addEventListener("click", () => {
+      const customPrefix = document.getElementById("custom-prefix");
+      activePrefix = (customPrefix && customPrefix.value.trim()) || "Sepansar";
+      renderServerList();
+      showToast(I18N[currentLang].toastPrefix);
+    });
+  }
+
+  document.querySelectorAll(".proto-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      document.querySelectorAll(".proto-card").forEach((c) => c.classList.remove("active"));
+      card.classList.add("active");
+      currentProtocol = card.dataset.proto;
+      renderServerList();
+      const titleEl = card.querySelector(".proto-title");
+      showToast(I18N[currentLang].toastProto + ": " + (titleEl ? titleEl.textContent : currentProtocol));
+    });
+  });
+
+  const btnReload = document.getElementById("btn-reload");
+  if (btnReload) {
+    btnReload.addEventListener("click", () => {
+      btnReload.classList.add("spinning");
+      const s = document.createElement("script");
+      s.src = "servers.js?t=" + Date.now();
+      s.onload = () => {
+        btnReload.classList.remove("spinning");
+        loadServers();
+        showToast(I18N[currentLang].toastReload);
+      };
+      document.body.appendChild(s);
+    });
+  }
+
+  const searchBox = document.getElementById("search-box");
+  if (searchBox) {
+    searchBox.addEventListener("input", renderServerList);
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
+  initEvents();
   loadServers();
 });
 
 if (document.readyState === "complete" || document.readyState === "interactive") {
   initTheme();
+  initEvents();
   loadServers();
 }
