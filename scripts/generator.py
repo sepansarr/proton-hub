@@ -22,6 +22,13 @@ ENDPOINTS = [
     "https://api.protonvpn.ch/vpn/logicals",
 ]
 
+V1_ENDPOINTS = [
+    "https://account-api.protonvpn.com/api/vpn/logicals",
+    "https://account.protonvpn.com/api/vpn/logicals",
+    "https://account.proton.me/api/vpn/logicals",
+    "https://api.protonvpn.ch/vpn/logicals",
+]
+
 VERSION_SOURCES = [
     "https://account.protonvpn.com/assets/version.json",
     "https://account.proton.me/assets/version.json",
@@ -84,7 +91,7 @@ def discover_versions():
 
         raw_version = data.get("version") if isinstance(data, dict) else None
         if not raw_version:
-            log(f"[version] {url} -> HTTP 200 but no version field, keys={list(data.keys())[:10] if isinstance(data, dict) else type(data).__name__}")
+            log(f"[version] {url} -> HTTP 200 but no version field")
             continue
 
         candidate = normalize_version(str(raw_version))
@@ -109,6 +116,14 @@ def build_headers(version, authenticated):
     return headers
 
 
+def attempt_labels():
+    labels = []
+    if PROTON_COOKIE or PROTON_UID:
+        labels.append(("auth", True))
+    labels.append(("public", False))
+    return labels
+
+
 def is_truly_free(s):
     name = str(s.get("Name", "")).upper()
     tier = s.get("Tier", 0)
@@ -119,32 +134,16 @@ def is_truly_free(s):
     return False
 
 
-def to_percent(val):
+def parse_load(val):
     try:
         fval = float(val)
     except Exception:
         return None
     if fval < 0:
         return None
-    if 0 < fval < 1 and not float(fval).is_integer():
+    if 0 < fval < 1:
         fval = fval * 100
-    if fval > 100 and fval <= 1000:
-        fval = fval / 10
     return max(0, min(100, int(round(fval))))
-
-
-def extract_real_load(s):
-    val = to_percent(s.get("Load"))
-    if val is not None:
-        return val
-
-    servers = s.get("Servers")
-    if isinstance(servers, list) and len(servers) > 0 and isinstance(servers[0], dict):
-        val = to_percent(servers[0].get("Load"))
-        if val is not None:
-            return val
-
-    return 80
 
 
 def fetch_from(url, headers, label):
@@ -177,19 +176,11 @@ def fetch_from(url, headers, label):
 
     filtered = [s for s in items if s.get("Status", 1) == 1 and is_truly_free(s)]
     log(f"[{label}] {url} -> HTTP 200 total={len(items)} free_online={len(filtered)}")
-
-    for s in filtered:
-        s["ActualLoad"] = extract_real_load(s)
     return filtered, False
 
 
 def try_version(version):
-    labels = []
-    if PROTON_COOKIE or PROTON_UID:
-        labels.append(("auth", True))
-    labels.append(("public", False))
-
-    for label, authenticated in labels:
+    for label, authenticated in attempt_labels():
         headers = build_headers(version, authenticated)
         for url in ENDPOINTS:
             servers, outdated = fetch_from(url, headers, label)
@@ -210,6 +201,91 @@ def fetch_free_servers(versions):
     return [], ""
 
 
+def fetch_v1_index(version):
+    for label, authenticated in attempt_labels():
+        headers = build_headers(version, authenticated)
+        for url in V1_ENDPOINTS:
+            try:
+                res = requests.get(url, headers=headers, timeout=25)
+            except Exception as e:
+                log(f"[v1-{label}] {url} -> request error: {type(e).__name__}: {e}")
+                continue
+
+            if res.status_code != 200:
+                log(f"[v1-{label}] {url} -> HTTP {res.status_code} body={res.text[:200]!r}")
+                continue
+
+            try:
+                raw = res.json()
+            except ValueError:
+                log(f"[v1-{label}] {url} -> HTTP 200 but body is not JSON")
+                continue
+
+            items = raw.get("LogicalServers", []) if isinstance(raw, dict) else raw
+            if not isinstance(items, list):
+                log(f"[v1-{label}] {url} -> HTTP 200 but no server list found")
+                continue
+
+            by_id = {}
+            by_name = {}
+            with_load = 0
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                entry = {"Load": parse_load(item.get("Load")), "Status": item.get("Status")}
+                if entry["Load"] is not None:
+                    with_load += 1
+                if item.get("ID"):
+                    by_id[item["ID"]] = entry
+                if item.get("Name"):
+                    by_name[item["Name"]] = entry
+
+            log(f"[v1-{label}] {url} -> HTTP 200 total={len(items)} with_load={with_load}")
+            if with_load > 0:
+                return by_id, by_name
+
+    log("[v1] no usable load data from the v1 logicals endpoints")
+    return {}, {}
+
+
+def apply_live_data(servers, by_id, by_name):
+    result = []
+    counts = {"v2": 0, "v1": 0, "unknown": 0}
+    offline = 0
+
+    for s in servers:
+        v1 = by_id.get(s.get("ID")) or by_name.get(s.get("Name"))
+
+        load = parse_load(s.get("Load"))
+        source = "v2"
+        if load is None and v1 and v1["Load"] is not None:
+            load = v1["Load"]
+            source = "v1"
+        if load is None:
+            load = 80
+            source = "unknown"
+
+        status = s.get("Status")
+        if status is None and v1 and v1["Status"] is not None:
+            status = v1["Status"]
+        if status is not None and status != 1:
+            offline += 1
+            continue
+
+        s["ActualLoad"] = load
+        counts[source] += 1
+        result.append(s)
+
+    log(f"[loads] source counts: v2={counts['v2']} v1={counts['v1']} unknown(default 80)={counts['unknown']} dropped_offline={offline}")
+    return result
+
+
+def log_load_table(servers):
+    rows = sorted(f"{s.get('Name', '?')}={s['ActualLoad']}" for s in servers)
+    for i in range(0, len(rows), 8):
+        log("[loads] " + ", ".join(rows[i:i + 8]))
+
+
 def fetch_vpn_credentials(version):
     url = "https://account-api.protonvpn.com/api/core/v4/vpn"
     try:
@@ -223,7 +299,7 @@ def fetch_vpn_credentials(version):
                 return user, pwd
             log("[credentials] HTTP 200 but Name/Password missing, using secrets fallback")
         else:
-            log(f"[credentials] HTTP {res.status_code} body={res.text[:200]!r}, using secrets fallback")
+            log(f"[credentials] HTTP {res.status_code}, using secrets fallback")
     except Exception as e:
         log(f"[credentials] request error: {type(e).__name__}: {e}, using secrets fallback")
     return DEFAULT_USER, DEFAULT_PASS
@@ -236,7 +312,7 @@ def run():
 
     versions = discover_versions()
     if not versions:
-        log("ERROR: no app version available. Set the PROTON_APPVERSION secret from the x-pm-appversion request header in your browser. servers.js was NOT modified.")
+        log("ERROR: no app version available. Set the PROTON_APPVERSION secret. servers.js was NOT modified.")
         return 1
 
     servers, working_version = fetch_free_servers(versions)
@@ -245,6 +321,17 @@ def run():
         return 1
 
     log(f"working app version: {working_version}")
+    log(f"[v2] free server record keys: {sorted(servers[0].keys())}")
+    log(f"[v2] records with Load field: {sum(1 for s in servers if s.get('Load') is not None)} of {len(servers)}")
+
+    by_id, by_name = fetch_v1_index(working_version)
+    servers = apply_live_data(servers, by_id, by_name)
+
+    if not servers:
+        log("ERROR: no online free servers after merging live data. servers.js was NOT modified.")
+        return 1
+
+    log_load_table(servers)
 
     user, pwd = fetch_vpn_credentials(working_version)
     if not user or not pwd:
