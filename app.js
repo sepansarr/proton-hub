@@ -216,7 +216,7 @@ function renderServerList() {
   if (statusCounter) {
     statusCounter.textContent = filtered.length + " " + t.statusReady;
   }
-  
+
   const fullCounterBadge = document.getElementById("full-counter-badge");
   const fullCounterText = document.getElementById("full-counter-text");
   if (fullCounterBadge && fullCounterText) {
@@ -228,7 +228,7 @@ function renderServerList() {
     }
   }
 
-  const container = document.querySelector(".table-wrapper");
+  const container = document.querySelector(".server-deck-wrapper");
   if (!container) return;
   container.innerHTML = "";
 
@@ -242,7 +242,7 @@ function renderServerList() {
   Object.keys(groups).sort().forEach((countryCode) => {
     const list = groups[countryCode];
     const groupDiv = document.createElement("div");
-    
+
     const isOpen = openGroups[countryCode] !== undefined ? openGroups[countryCode] : false;
     groupDiv.className = "country-group" + (isOpen ? " open" : "");
 
@@ -275,10 +275,9 @@ function renderServerList() {
 
       const ext = currentProtocol === "wireguard" ? ".conf" : ".ovpn";
       const displayName = activePrefix + "-" + srv.Name + ext;
-      
-      const load = srv.ActualLoad !== undefined ? srv.ActualLoad : (srv.Load !== undefined ? Math.round(srv.Load) : 84);
-      const color = load >= 100 ? "var(--danger)" : load > 85 ? "var(--warning)" : "var(--success)";
 
+      const load = srv.ActualLoad !== undefined ? srv.ActualLoad : (srv.Load !== undefined ? Math.round(srv.Load) : 80);
+      const color = load >= 100 ? "var(--status-crit)" : load > 85 ? "var(--status-warn)" : "var(--status-good)";
       const hasIpv6 = Boolean(srv.Features && (srv.Features & 16 || srv.Features & 32));
 
       row.innerHTML = `
@@ -309,12 +308,14 @@ function renderServerList() {
 function exportConfig(srv) {
   const finalFilename = activePrefix + "-" + srv.Name;
   const ip = srv.Servers && srv.Servers[0] ? srv.Servers[0].EntryIP : srv.Domain;
-  const cfg = window.SECRET_CONFIG || { user: "username", pass: "password", wgPrivate: "UKZg5sKBtmgXRYbp8lugpdRnBwYzKfuWqsjeH/aKrU0=" };
+  const cfg = window.SECRET_CONFIG || { user: "username", pass: "password", wgPrivate: "" };
 
   if (currentProtocol === "wireguard") {
     const pubKey = srv.Servers && srv.Servers[0] ? srv.Servers[0].X25519PublicKey || "" : "";
+    const privateKey = srv.WireGuardPrivateKey || cfg.wgPrivate || "UKZg5sKBtmgXRYbp8lugpdRnBwYzKfuWqsjeH/aKrU0=";
+
     const payload = `[Interface]
-PrivateKey = ${cfg.wgPrivate}
+PrivateKey = ${privateKey}
 Address = 10.2.0.2/32, 2a07:b944::2:2/128
 DNS = 10.2.0.1, 2a07:b944::2:1
 
@@ -327,6 +328,18 @@ PersistentKeepalive = 25
     executeBlobDownload(finalFilename + ".conf", payload);
   } else {
     const isTcp = currentProtocol === "openvpn-tcp";
+    const protoKey = isTcp ? "config_ovpn_tcp" : "config_ovpn_udp";
+
+    if (srv[protoKey]) {
+      const anchor = document.createElement("a");
+      anchor.href = srv[protoKey];
+      anchor.download = finalFilename + ".ovpn";
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      return;
+    }
+
     const proto = isTcp ? "tcp" : "udp";
     const ports = isTcp ? [443, 8443, 5060] : [5060, 51820, 4569, 80, 1194];
     const remoteDirectives = ports.map((p) => "remote " + ip + " " + p).join("\n");
@@ -336,7 +349,6 @@ PersistentKeepalive = 25
       : "+b:0";
 
     const userWithSuffix = cfg.user ? cfg.user + exitSuffix : "";
-
     const authSection = (userWithSuffix && cfg.pass)
       ? "<auth-user-pass>\n" + userWithSuffix + "\n" + cfg.pass + "\n</auth-user-pass>"
       : "auth-user-pass";
@@ -344,23 +356,17 @@ PersistentKeepalive = 25
     const payload = `client
 dev tun
 proto ${proto}
-
 ${remoteDirectives}
-
 remote-random
 resolv-retry infinite
 nobind
-
 cipher AES-256-GCM
-
 setenv CLIENT_CERT 0
 tun-mtu 1500
 mssfix 0
 persist-key
 persist-tun
-
 reneg-sec 0
-
 remote-cert-tls server
 ${authSection}
 
@@ -413,13 +419,13 @@ function initEvents() {
     });
   }
 
-  document.querySelectorAll(".proto-card").forEach((card) => {
+  document.querySelectorAll(".protocol-tile").forEach((card) => {
     card.addEventListener("click", () => {
-      document.querySelectorAll(".proto-card").forEach((c) => c.classList.remove("active"));
+      document.querySelectorAll(".protocol-tile").forEach((c) => c.classList.remove("active"));
       card.classList.add("active");
       currentProtocol = card.dataset.proto;
       renderServerList();
-      const titleEl = card.querySelector(".proto-title");
+      const titleEl = card.querySelector(".tile-meta span");
       showToast(I18N[currentLang].toastProto + ": " + (titleEl ? titleEl.textContent : currentProtocol));
     });
   });
