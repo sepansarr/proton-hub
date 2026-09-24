@@ -4,8 +4,9 @@ import json
 import traceback
 import requests
 
-PROTON_COOKIE = os.getenv("PROTON_COOKIE", "")
-PROTON_UID = os.getenv("PROTON_UID", "")
+PROTON_COOKIE = os.getenv("PROTON_COOKIE", "").strip()
+PROTON_UID = os.getenv("PROTON_UID", "").strip()
+PROTON_APPVERSION = os.getenv("PROTON_APPVERSION", "").strip()
 DEFAULT_USER = os.getenv("PROTON_USER", "")
 DEFAULT_PASS = os.getenv("PROTON_PASS", "")
 WG_PRIVATE = os.getenv("PROTON_WG_PRIVATE", "")
@@ -19,6 +20,11 @@ ENDPOINTS = [
     "https://account.proton.me/api/vpn/v2/logicals?WithIpV6=1",
     "https://api.protonvpn.ch/vpn/logicals?WithIpV6=1",
     "https://api.protonvpn.ch/vpn/logicals",
+]
+
+VERSION_SOURCES = [
+    "https://account.protonvpn.com/assets/version.json",
+    "https://account.proton.me/assets/version.json",
 ]
 
 REPORT = []
@@ -41,20 +47,65 @@ def flush_report():
         pass
 
 
-def public_headers():
-    return {
+def normalize_version(value):
+    value = value.strip()
+    if not value:
+        return ""
+    if "@" in value:
+        return value
+    return "web-vpn-settings@" + value
+
+
+def discover_versions():
+    versions = []
+
+    if PROTON_APPVERSION:
+        versions.append(normalize_version(PROTON_APPVERSION))
+        log(f"[version] using PROTON_APPVERSION secret: {versions[0]}")
+    else:
+        log("[version] PROTON_APPVERSION secret is empty")
+
+    for url in VERSION_SOURCES:
+        try:
+            res = requests.get(url, headers={"user-agent": USER_AGENT}, timeout=15)
+        except Exception as e:
+            log(f"[version] {url} -> request error: {type(e).__name__}: {e}")
+            continue
+
+        if res.status_code != 200:
+            log(f"[version] {url} -> HTTP {res.status_code}")
+            continue
+
+        try:
+            data = res.json()
+        except ValueError:
+            log(f"[version] {url} -> HTTP 200 but body is not JSON: {res.text[:200]!r}")
+            continue
+
+        raw_version = data.get("version") if isinstance(data, dict) else None
+        if not raw_version:
+            log(f"[version] {url} -> HTTP 200 but no version field, keys={list(data.keys())[:10] if isinstance(data, dict) else type(data).__name__}")
+            continue
+
+        candidate = normalize_version(str(raw_version))
+        log(f"[version] {url} -> discovered {candidate}")
+        if candidate not in versions:
+            versions.append(candidate)
+
+    return versions
+
+
+def build_headers(version, authenticated):
+    headers = {
         "accept": "application/vnd.protonmail.v1+json",
-        "x-pm-appversion": "web-vpn-settings@5.0.357.0",
+        "x-pm-appversion": version,
         "user-agent": USER_AGENT,
     }
-
-
-def auth_headers():
-    headers = public_headers()
-    if PROTON_UID:
-        headers["x-pm-uid"] = PROTON_UID
-    if PROTON_COOKIE:
-        headers["Cookie"] = PROTON_COOKIE
+    if authenticated:
+        if PROTON_UID:
+            headers["x-pm-uid"] = PROTON_UID
+        if PROTON_COOKIE:
+            headers["Cookie"] = PROTON_COOKIE
     return headers
 
 
@@ -101,17 +152,18 @@ def fetch_from(url, headers, label):
         res = requests.get(url, headers=headers, timeout=25)
     except Exception as e:
         log(f"[{label}] {url} -> request error: {type(e).__name__}: {e}")
-        return []
+        return [], False
 
     if res.status_code != 200:
+        outdated = res.status_code == 422 and '"Code":5003' in res.text.replace(" ", "")
         log(f"[{label}] {url} -> HTTP {res.status_code} body={res.text[:300]!r}")
-        return []
+        return [], outdated
 
     try:
         raw = res.json()
     except ValueError:
         log(f"[{label}] {url} -> HTTP 200 but body is not JSON: {res.text[:300]!r}")
-        return []
+        return [], False
 
     if isinstance(raw, dict):
         log(f"[{label}] {url} -> HTTP 200 keys={list(raw.keys())[:10]}")
@@ -121,36 +173,47 @@ def fetch_from(url, headers, label):
 
     if not isinstance(items, list):
         log(f"[{label}] {url} -> HTTP 200 but no server list found")
-        return []
+        return [], False
 
     filtered = [s for s in items if s.get("Status", 1) == 1 and is_truly_free(s)]
     log(f"[{label}] {url} -> HTTP 200 total={len(items)} free_online={len(filtered)}")
 
     for s in filtered:
         s["ActualLoad"] = extract_real_load(s)
-    return filtered
+    return filtered, False
 
 
-def fetch_free_servers():
-    attempts = []
+def try_version(version):
+    labels = []
     if PROTON_COOKIE or PROTON_UID:
-        attempts.append(("auth", auth_headers()))
-    attempts.append(("public", public_headers()))
+        labels.append(("auth", True))
+    labels.append(("public", False))
 
-    log(f"attempt plan: {[a[0] for a in attempts]}")
-
-    for label, headers in attempts:
+    for label, authenticated in labels:
+        headers = build_headers(version, authenticated)
         for url in ENDPOINTS:
-            result = fetch_from(url, headers, label)
-            if result:
-                return result
+            servers, outdated = fetch_from(url, headers, label)
+            if servers:
+                return servers
+            if outdated:
+                log(f"version rejected as out of date: {version}")
+                return []
     return []
 
 
-def fetch_vpn_credentials():
+def fetch_free_servers(versions):
+    for version in versions:
+        log(f"trying app version: {version}")
+        servers = try_version(version)
+        if servers:
+            return servers, version
+    return [], ""
+
+
+def fetch_vpn_credentials(version):
     url = "https://account-api.protonvpn.com/api/core/v4/vpn"
     try:
-        res = requests.get(url, headers=auth_headers(), timeout=15)
+        res = requests.get(url, headers=build_headers(version, True), timeout=15)
         if res.status_code == 200:
             data = res.json().get("VPN", {})
             user = data.get("Name")
@@ -160,7 +223,7 @@ def fetch_vpn_credentials():
                 return user, pwd
             log("[credentials] HTTP 200 but Name/Password missing, using secrets fallback")
         else:
-            log(f"[credentials] HTTP {res.status_code}, using secrets fallback")
+            log(f"[credentials] HTTP {res.status_code} body={res.text[:200]!r}, using secrets fallback")
     except Exception as e:
         log(f"[credentials] request error: {type(e).__name__}: {e}, using secrets fallback")
     return DEFAULT_USER, DEFAULT_PASS
@@ -169,14 +232,21 @@ def fetch_vpn_credentials():
 def run():
     log("generator started")
     log(f"python={sys.version.split()[0]} requests={requests.__version__}")
-    log(f"secrets present: cookie={bool(PROTON_COOKIE)} uid={bool(PROTON_UID)} user={bool(DEFAULT_USER)} pass={bool(DEFAULT_PASS)} wg={bool(WG_PRIVATE)}")
+    log(f"secrets present: cookie={bool(PROTON_COOKIE)} uid={bool(PROTON_UID)} appversion={bool(PROTON_APPVERSION)} user={bool(DEFAULT_USER)} pass={bool(DEFAULT_PASS)} wg={bool(WG_PRIVATE)}")
 
-    servers = fetch_free_servers()
+    versions = discover_versions()
+    if not versions:
+        log("ERROR: no app version available. Set the PROTON_APPVERSION secret from the x-pm-appversion request header in your browser. servers.js was NOT modified.")
+        return 1
+
+    servers, working_version = fetch_free_servers(versions)
     if not servers:
         log("ERROR: no free servers could be fetched. servers.js was NOT modified.")
         return 1
 
-    user, pwd = fetch_vpn_credentials()
+    log(f"working app version: {working_version}")
+
+    user, pwd = fetch_vpn_credentials(working_version)
     if not user or not pwd:
         log("ERROR: OpenVPN credentials are empty. servers.js was NOT modified.")
         return 1
