@@ -447,7 +447,13 @@ function initEvents() {
 
   const searchBox = document.getElementById("search-box");
   if (searchBox) {
-    searchBox.addEventListener("input", renderServerList);
+    let searchDebounceTimer;
+    searchBox.addEventListener("input", () => {
+      clearTimeout(searchDebounceTimer);
+      searchDebounceTimer = setTimeout(() => {
+        renderServerList();
+      }, 150);
+    });
   }
 }
 
