@@ -129,7 +129,6 @@ const statusCounter = document.getElementById("status-counter");
 const fullCounterBadge = document.getElementById("full-counter-badge");
 const fullCounterText = document.getElementById("full-counter-text");
 const btnReload = document.getElementById("btn-reload");
-const tableWrapper = document.querySelector(".table-wrapper");
 const toast = document.getElementById("toast");
 
 const txtBrandTitle = document.getElementById("txt-brand-title");
@@ -146,7 +145,18 @@ const txtMainSubtitle = document.getElementById("txt-main-subtitle");
 const txtFooterOwn = document.getElementById("txt-footer-own");
 const txtFooterDisclaimer = document.getElementById("txt-footer-disclaimer");
 
+function getTableWrapper() {
+  return document.querySelector(".table-wrapper") || 
+         document.getElementById("servers-container") || 
+         document.getElementById("servers-list") || 
+         document.querySelector(".servers-container") || 
+         document.querySelector(".servers-list") || 
+         document.querySelector("main") || 
+         document.body;
+}
+
 function showToast(msg) {
+  if (!toast) return;
   toast.textContent = msg;
   toast.classList.add("show");
   setTimeout(() => toast.classList.remove("show"), 2500);
@@ -155,51 +165,57 @@ function showToast(msg) {
 function initTheme() {
   const saved = localStorage.getItem("sepansar_theme") || "dark";
   document.documentElement.setAttribute("data-theme", saved);
-  themeCheckbox.checked = (saved === "light");
+  if (themeCheckbox) {
+    themeCheckbox.checked = (saved === "light");
+  }
 }
 
-themeCheckbox.addEventListener("change", () => {
-  const targetTheme = themeCheckbox.checked ? "light" : "dark";
-  document.documentElement.setAttribute("data-theme", targetTheme);
-  localStorage.setItem("sepansar_theme", targetTheme);
-});
+if (themeCheckbox) {
+  themeCheckbox.addEventListener("change", () => {
+    const targetTheme = themeCheckbox.checked ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", targetTheme);
+    localStorage.setItem("sepansar_theme", targetTheme);
+  });
+}
 
 function applyLanguage(lang) {
   currentLang = lang;
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
 
-  btnFa.classList.toggle("active", lang === "fa");
-  btnEn.classList.toggle("active", lang === "en");
+  if (btnFa) btnFa.classList.toggle("active", lang === "fa");
+  if (btnEn) btnEn.classList.toggle("active", lang === "en");
 
   const t = I18N[lang];
-  txtBrandTitle.textContent = t.brandTitle;
-  tagCloud.textContent = t.tagCloud;
-  txtThemeLabel.textContent = t.themeLabel;
-  txtLangLabel.textContent = t.langLabel;
-  lblCustomPrefix.textContent = t.prefixLabel;
-  lblProtocol.textContent = t.protoLabel;
-  txtProtoWg.textContent = t.protoWg;
-  txtProtoUdp.textContent = t.protoUdp;
-  txtProtoTcp.textContent = t.protoTcp;
-  txtMainTitle.textContent = t.mainTitle;
-  txtMainSubtitle.textContent = t.mainSub;
-  searchBox.placeholder = t.searchPlaceholder;
-  txtApply.textContent = t.applyBtn;
-  txtFooterOwn.innerHTML = t.footerOwn;
-  txtFooterDisclaimer.textContent = t.footerDisclaimer;
+  if (txtBrandTitle) txtBrandTitle.textContent = t.brandTitle;
+  if (tagCloud) tagCloud.textContent = t.tagCloud;
+  if (txtThemeLabel) txtThemeLabel.textContent = t.themeLabel;
+  if (txtLangLabel) txtLangLabel.textContent = t.langLabel;
+  if (lblCustomPrefix) lblCustomPrefix.textContent = t.prefixLabel;
+  if (lblProtocol) lblProtocol.textContent = t.protoLabel;
+  if (txtProtoWg) txtProtoWg.textContent = t.protoWg;
+  if (txtProtoUdp) txtProtoUdp.textContent = t.protoUdp;
+  if (txtProtoTcp) txtProtoTcp.textContent = t.protoTcp;
+  if (txtMainTitle) txtMainTitle.textContent = t.mainTitle;
+  if (txtMainSubtitle) txtMainSubtitle.textContent = t.mainSub;
+  if (searchBox) searchBox.placeholder = t.searchPlaceholder;
+  if (txtApply) txtApply.textContent = t.applyBtn;
+  if (txtFooterOwn) txtFooterOwn.innerHTML = t.footerOwn;
+  if (txtFooterDisclaimer) txtFooterDisclaimer.textContent = t.footerDisclaimer;
 
   renderServerList();
 }
 
-btnFa.addEventListener("click", () => applyLanguage("fa"));
-btnEn.addEventListener("click", () => applyLanguage("en"));
+if (btnFa) btnFa.addEventListener("click", () => applyLanguage("fa"));
+if (btnEn) btnEn.addEventListener("click", () => applyLanguage("en"));
 
-btnApplyPrefix.addEventListener("click", () => {
-  activePrefix = customPrefix.value.trim() || "Sepansar";
-  renderServerList();
-  showToast(I18N[currentLang].toastPrefix);
-});
+if (btnApplyPrefix) {
+  btnApplyPrefix.addEventListener("click", () => {
+    activePrefix = (customPrefix && customPrefix.value.trim()) || "Sepansar";
+    renderServerList();
+    showToast(I18N[currentLang].toastPrefix);
+  });
+}
 
 document.querySelectorAll(".proto-card").forEach((card) => {
   card.addEventListener("click", () => {
@@ -207,30 +223,35 @@ document.querySelectorAll(".proto-card").forEach((card) => {
     card.classList.add("active");
     currentProtocol = card.dataset.proto;
     renderServerList();
-    showToast(`${I18N[currentLang].toastProto}: ${card.querySelector(".proto-title").textContent}`);
+    const titleEl = card.querySelector(".proto-title");
+    showToast(`${I18N[currentLang].toastProto}: ${titleEl ? titleEl.textContent : currentProtocol}`);
   });
 });
 
-btnReload.addEventListener("click", () => {
-  btnReload.classList.add("spinning");
-  const s = document.createElement("script");
-  s.src = "servers.js?t=" + Date.now();
-  s.onload = () => {
-    btnReload.classList.remove("spinning");
-    loadServers();
-    showToast(I18N[currentLang].toastReload);
-  };
-  document.body.appendChild(s);
-});
+if (btnReload) {
+  btnReload.addEventListener("click", () => {
+    btnReload.classList.add("spinning");
+    const s = document.createElement("script");
+    s.src = "servers.js?t=" + Date.now();
+    s.onload = () => {
+      btnReload.classList.remove("spinning");
+      loadServers();
+      showToast(I18N[currentLang].toastReload);
+    };
+    document.body.appendChild(s);
+  });
+}
 
-searchBox.addEventListener("input", renderServerList);
+if (searchBox) {
+  searchBox.addEventListener("input", renderServerList);
+}
 
 function loadServers() {
   if (window.STATIC_SERVERS && Array.isArray(window.STATIC_SERVERS) && window.STATIC_SERVERS.length > 0) {
     serverDataset = window.STATIC_SERVERS;
     renderServerList();
   } else {
-    statusCounter.textContent = I18N[currentLang].errConn;
+    if (statusCounter) statusCounter.textContent = I18N[currentLang].errConn;
   }
 }
 
@@ -241,7 +262,7 @@ function getCountryFlag(code) {
 
 function renderServerList() {
   const t = I18N[currentLang];
-  const query = searchBox.value.trim().toLowerCase();
+  const query = searchBox ? searchBox.value.trim().toLowerCase() : "";
 
   const filtered = serverDataset.filter((s) => {
     const name = (s.Name || "").toLowerCase();
@@ -255,16 +276,22 @@ function renderServerList() {
     return l >= 100;
   }).length;
 
-  statusCounter.textContent = `${filtered.length} ${t.statusReady}`;
+  if (statusCounter) {
+    statusCounter.textContent = `${filtered.length} ${t.statusReady}`;
+  }
   
-  if (fullCount > 0) {
-    fullCounterBadge.style.display = "flex";
-    fullCounterText.textContent = `${fullCount} ${t.fullServers}`;
-  } else {
-    fullCounterBadge.style.display = "none";
+  if (fullCounterBadge && fullCounterText) {
+    if (fullCount > 0) {
+      fullCounterBadge.style.display = "flex";
+      fullCounterText.textContent = `${fullCount} ${t.fullServers}`;
+    } else {
+      fullCounterBadge.style.display = "none";
+    }
   }
 
-  tableWrapper.innerHTML = "";
+  const container = getTableWrapper();
+  if (!container) return;
+  container.innerHTML = "";
 
   const groups = {};
   filtered.forEach((srv) => {
@@ -336,7 +363,7 @@ function renderServerList() {
 
     groupDiv.appendChild(header);
     groupDiv.appendChild(bodyDiv);
-    tableWrapper.appendChild(groupDiv);
+    container.appendChild(groupDiv);
   });
 }
 
@@ -366,18 +393,32 @@ PersistentKeepalive = 25
   } else {
     const isTcp = currentProtocol === "openvpn-tcp";
     const proto = isTcp ? "tcp" : "udp";
-    const ports = isTcp ? [443, 8443, 5060] : [80, 5060, 1194, 51820, 4569];
+    const ports = isTcp ? [443, 8443, 5060] : [5060, 51820, 4569, 80, 1194];
     const remoteDirectives = ports.map((p) => `remote ${ip} ${p}`).join("\n");
 
-    const authSection = (cfg.user && cfg.pass)
-      ? `<auth-user-pass>\n${cfg.user}\n${cfg.pass}\n</auth-user-pass>`
+    const exitSuffix = (srv.Servers && srv.Servers[0] && srv.Servers[0].Label !== undefined)
+      ? `+b:${srv.Servers[0].Label}`
+      : `+b:0`;
+
+    const userWithSuffix = cfg.user ? `${cfg.user}${exitSuffix}` : "";
+
+    const authSection = (userWithSuffix && cfg.pass)
+      ? `<auth-user-pass>\n${userWithSuffix}\n${cfg.pass}\n</auth-user-pass>`
       : `auth-user-pass`;
 
     const payload = `# ==============================================================================
-# Copyright (c) Proton AG (Switzerland)
+# Copyright (c) 2023 Proton AG (Switzerland)
+# Email: contact@protonvpn.com
 # Generated via Proton Hub (sepansar)
 # Server: ${srv.Name}
 # ==============================================================================
+
+# The server you are connecting to is using a circuit in order to separate entry IP from exit IP
+# The same entry IP allows to connect to multiple exit IPs in the same data center.
+
+# If you want to explicitly select the exit IP corresponding to server ${srv.Name} you need to
+# append a special suffix to your OpenVPN username.
+# Please use "${userWithSuffix}" in order to enforce exiting through ${srv.Name}.
 
 client
 dev tun
@@ -425,5 +466,12 @@ function executeBlobDownload(filename, body) {
   URL.revokeObjectURL(anchor.href);
 }
 
-initTheme();
-loadServers();
+document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
+  loadServers();
+});
+
+if (document.readyState === "complete" || document.readyState === "interactive") {
+  initTheme();
+  loadServers();
+}
