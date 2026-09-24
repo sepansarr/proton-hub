@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import traceback
 import requests
 
 PROTON_COOKIE = os.getenv("PROTON_COOKIE", "")
@@ -8,6 +9,7 @@ PROTON_UID = os.getenv("PROTON_UID", "")
 DEFAULT_USER = os.getenv("PROTON_USER", "")
 DEFAULT_PASS = os.getenv("PROTON_PASS", "")
 WG_PRIVATE = os.getenv("PROTON_WG_PRIVATE", "")
+SUMMARY_PATH = os.getenv("GITHUB_STEP_SUMMARY", "")
 
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 
@@ -18,6 +20,25 @@ ENDPOINTS = [
     "https://api.protonvpn.ch/vpn/logicals?WithIpV6=1",
     "https://api.protonvpn.ch/vpn/logicals",
 ]
+
+REPORT = []
+
+
+def log(message):
+    REPORT.append(message)
+    print(message, flush=True)
+
+
+def flush_report():
+    if not SUMMARY_PATH:
+        return
+    try:
+        with open(SUMMARY_PATH, "a", encoding="utf-8") as f:
+            f.write("### Generator report\n\n```\n")
+            f.write("\n".join(REPORT))
+            f.write("\n```\n")
+    except Exception:
+        pass
 
 
 def public_headers():
@@ -79,26 +100,31 @@ def fetch_from(url, headers, label):
     try:
         res = requests.get(url, headers=headers, timeout=25)
     except Exception as e:
-        print(f"[{label}] {url} -> request error: {type(e).__name__}", file=sys.stderr)
+        log(f"[{label}] {url} -> request error: {type(e).__name__}: {e}")
         return []
 
     if res.status_code != 200:
-        print(f"[{label}] {url} -> HTTP {res.status_code}: {res.text[:200]!r}", file=sys.stderr)
+        log(f"[{label}] {url} -> HTTP {res.status_code} body={res.text[:300]!r}")
         return []
 
     try:
         raw = res.json()
     except ValueError:
-        print(f"[{label}] {url} -> HTTP 200 but response is not valid JSON", file=sys.stderr)
+        log(f"[{label}] {url} -> HTTP 200 but body is not JSON: {res.text[:300]!r}")
         return []
 
-    items = raw.get("LogicalServers", []) if isinstance(raw, dict) else raw
+    if isinstance(raw, dict):
+        log(f"[{label}] {url} -> HTTP 200 keys={list(raw.keys())[:10]}")
+        items = raw.get("LogicalServers", [])
+    else:
+        items = raw
+
     if not isinstance(items, list):
-        print(f"[{label}] {url} -> HTTP 200 but no server list found", file=sys.stderr)
+        log(f"[{label}] {url} -> HTTP 200 but no server list found")
         return []
 
     filtered = [s for s in items if s.get("Status", 1) == 1 and is_truly_free(s)]
-    print(f"[{label}] {url} -> HTTP 200, total={len(items)}, free_online={len(filtered)}")
+    log(f"[{label}] {url} -> HTTP 200 total={len(items)} free_online={len(filtered)}")
 
     for s in filtered:
         s["ActualLoad"] = extract_real_load(s)
@@ -110,6 +136,8 @@ def fetch_free_servers():
     if PROTON_COOKIE or PROTON_UID:
         attempts.append(("auth", auth_headers()))
     attempts.append(("public", public_headers()))
+
+    log(f"attempt plan: {[a[0] for a in attempts]}")
 
     for label, headers in attempts:
         for url in ENDPOINTS:
@@ -128,29 +156,33 @@ def fetch_vpn_credentials():
             user = data.get("Name")
             pwd = data.get("Password")
             if user and pwd:
-                print("[credentials] fetched from Proton API")
+                log("[credentials] fetched from Proton API")
                 return user, pwd
-            print("[credentials] HTTP 200 but Name/Password missing", file=sys.stderr)
+            log("[credentials] HTTP 200 but Name/Password missing, using secrets fallback")
         else:
-            print(f"[credentials] HTTP {res.status_code}, using secrets fallback", file=sys.stderr)
+            log(f"[credentials] HTTP {res.status_code}, using secrets fallback")
     except Exception as e:
-        print(f"[credentials] request error: {type(e).__name__}, using secrets fallback", file=sys.stderr)
+        log(f"[credentials] request error: {type(e).__name__}: {e}, using secrets fallback")
     return DEFAULT_USER, DEFAULT_PASS
 
 
-def main():
+def run():
+    log("generator started")
+    log(f"python={sys.version.split()[0]} requests={requests.__version__}")
+    log(f"secrets present: cookie={bool(PROTON_COOKIE)} uid={bool(PROTON_UID)} user={bool(DEFAULT_USER)} pass={bool(DEFAULT_PASS)} wg={bool(WG_PRIVATE)}")
+
     servers = fetch_free_servers()
     if not servers:
-        print("ERROR: no free servers could be fetched. servers.js was NOT modified.", file=sys.stderr)
-        sys.exit(1)
+        log("ERROR: no free servers could be fetched. servers.js was NOT modified.")
+        return 1
 
     user, pwd = fetch_vpn_credentials()
     if not user or not pwd:
-        print("ERROR: OpenVPN credentials are empty. servers.js was NOT modified.", file=sys.stderr)
-        sys.exit(1)
+        log("ERROR: OpenVPN credentials are empty. servers.js was NOT modified.")
+        return 1
 
     if not WG_PRIVATE:
-        print("WARNING: PROTON_WG_PRIVATE secret is empty, WireGuard configs will be incomplete.", file=sys.stderr)
+        log("WARNING: PROTON_WG_PRIVATE secret is empty, WireGuard configs will be incomplete.")
 
     secret_config = {"user": user, "pass": pwd, "wgPrivate": WG_PRIVATE}
 
@@ -162,7 +194,19 @@ def main():
     with open("servers.js", "w", encoding="utf-8") as f:
         f.write(js_content)
 
-    print(f"servers.js written with {len(servers)} servers")
+    log(f"servers.js written with {len(servers)} servers")
+    return 0
+
+
+def main():
+    code = 1
+    try:
+        code = run()
+    except Exception:
+        log("UNEXPECTED EXCEPTION:")
+        log(traceback.format_exc())
+    flush_report()
+    sys.exit(code)
 
 
 if __name__ == "__main__":
